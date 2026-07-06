@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import CONFIG from '../config/constants'
 import Atmosphere from './Atmosphere'
 import StarField from './StarField'
+import Organization from './Organization'
 import CameraController from './CameraController'
 import Effects from './Effects'
 
@@ -51,6 +52,7 @@ export default function Scene() {
       <Suspense fallback={null}>
         <Atmosphere cfg={CONFIG.nebula} />
         <StarField dust={CONFIG.dust} gold={CONFIG.gold} />
+        <Organization />
         <Preload all />
       </Suspense>
 

@@ -37,7 +37,7 @@ export default function UI() {
       </div>
 
       <footer className="ui-bottom ui-fade">
-        <span className="ui-hint">Mova o cursor · Etapa 1 — Atmosfera</span>
+        <span className="ui-hint">Mova o cursor · Etapa 2 — Organograma</span>
       </footer>
     </div>
   )

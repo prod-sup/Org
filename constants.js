@@ -21,16 +21,16 @@ export const CONFIG = {
     fov: 42,
     near: 0.1,
     far: 400,
-    start: [0, 0, 46],           // posição inicial (longe — reveal cinematográfico)
-    base: [0, 0, 17],            // posição de repouso após a intro
+    start: [0, 0, 60],           // posição inicial (longe — reveal cinematográfico)
+    base: [0, 0, 34],            // posição de repouso: naipe ♠ inteiro visível
     introDuration: 3.6,          // segundos do reveal de entrada
     introEase: 'power3.out',
     // parallax pelo mouse
-    parallaxStrength: 1.6,
+    parallaxStrength: 2.8,
     parallaxDamping: 0.045,      // menor = mais inércia / mais suave
     // flutuação idle (respiração)
-    floatAmplitude: 0.35,
-    floatSpeed: 0.18,
+    floatAmplitude: 0.5,
+    floatSpeed: 0.16,
   },
 
   // ---------------------------------------------------------------------------
