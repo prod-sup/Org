@@ -1,0 +1,206 @@
+import { useMemo, useRef, useLayoutEffect, useCallback } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
+import * as THREE from 'three'
+import { getOrganization, LEVELS } from '../data/organization'
+
+const dummy = new THREE.Object3D()
+
+/**
+ * Organization — as pessoas reais do Grupo Suprema como dois InstancedMesh:
+ *   • cores  : núcleo nítido, champanhe tingido pela cor da área
+ *   • halos  : esfera maior, aditiva e translúcida → glow suave na cor da área
+ *
+ * O peso visual (tamanho + brilho) vem de LEVELS. Vagas em aberto aparecem
+ * como estrelas apagadas ("adormecidas"). Hover no núcleo dispara o evento
+ * 'constelacao:hover' com { node, x, y } — o tooltip vive na camada de UI.
+ */
+const GROUP_OFFSET_X = 3.2 // deslocamento do grupo na cena (Scene.jsx)
+const projVec = new THREE.Vector3()
+
+export default function Organization() {
+  const org = useMemo(() => getOrganization(), [])
+  const coresRef = useRef()
+  const halosRef = useRef()
+  const hoveredRef = useRef(-1)
+  const camera = useThree((s) => s.camera)
+  const size = useThree((s) => s.size)
+
+  // Dados por instância (posições base, escalas, cores, fases de flutuação)
+  const inst = useMemo(() => {
+    const n = org.list.length
+    const basePos = new Float32Array(n * 3)
+    const coreScale = new Float32Array(n)
+    const haloScale = new Float32Array(n)
+    const coreColor = []
+    const haloColor = []
+    const phase = new Float32Array(n)
+    const freq = new Float32Array(n)   // frequência de respiração própria
+    const amp = new Float32Array(n)    // amplitude de respiração própria
+    const bob = new Float32Array(n)    // amplitude de flutuação vertical
+    const boost = new Float32Array(n)  // hover suavizado por nó
+
+    org.list.forEach((node, i) => {
+      const lvl = LEVELS[node.levelIndex]
+      basePos[i * 3 + 0] = node.pos[0]
+      basePos[i * 3 + 1] = node.pos[1]
+      basePos[i * 3 + 2] = node.pos[2]
+      coreScale[i] = lvl.size
+      haloScale[i] = lvl.size * lvl.haloScale
+
+      // núcleo champanhe puxado sutilmente para a cor da área
+      const dept = new THREE.Color(node.color)
+      const core = new THREE.Color(lvl.core).lerp(dept, 0.3)
+      const halo = new THREE.Color(lvl.halo).lerp(dept, 0.65)
+      if (node.vacant) {
+        // vaga em aberto: estrela adormecida
+        core.multiplyScalar(0.32)
+        halo.multiplyScalar(0.25)
+      } else {
+        core.multiplyScalar(lvl.brightness)
+      }
+      coreColor.push(core)
+      haloColor.push(halo)
+      phase[i] = Math.random() * Math.PI * 2
+      // movimento orgânico: cada estrela respira com ritmo e amplitude próprios
+      freq[i] = lvl.pulse.speed * (0.75 + Math.random() * 0.5)
+      amp[i] = lvl.pulse.amp * (0.7 + Math.random() * 0.6)
+      bob[i] = 0.035 + Math.random() * 0.05
+    })
+
+    return { n, basePos, coreScale, haloScale, coreColor, haloColor, phase, freq, amp, bob, boost }
+  }, [org])
+
+  // Inicializa matrizes e cores das instâncias
+  useLayoutEffect(() => {
+    const cores = coresRef.current
+    const halos = halosRef.current
+    if (!cores || !halos) return
+
+    for (let i = 0; i < inst.n; i++) {
+      const x = inst.basePos[i * 3 + 0]
+      const y = inst.basePos[i * 3 + 1]
+      const z = inst.basePos[i * 3 + 2]
+
+      dummy.position.set(x, y, z)
+      dummy.scale.setScalar(inst.coreScale[i])
+      dummy.updateMatrix()
+      cores.setMatrixAt(i, dummy.matrix)
+      cores.setColorAt(i, inst.coreColor[i])
+
+      dummy.scale.setScalar(inst.haloScale[i])
+      dummy.updateMatrix()
+      halos.setMatrixAt(i, dummy.matrix)
+      halos.setColorAt(i, inst.haloColor[i])
+    }
+
+    cores.instanceMatrix.needsUpdate = true
+    halos.instanceMatrix.needsUpdate = true
+    if (cores.instanceColor) cores.instanceColor.needsUpdate = true
+    if (halos.instanceColor) halos.instanceColor.needsUpdate = true
+  }, [inst])
+
+  // Respiração individual (freq/amp próprios) + hover com easing suave
+  useFrame((state, delta) => {
+    const cores = coresRef.current
+    const halos = halosRef.current
+    if (!cores || !halos) return
+    const t = state.clock.elapsedTime
+    const hovered = hoveredRef.current
+    const ease = Math.min(1, delta * 7) // suavização do destaque
+
+    for (let i = 0; i < inst.n; i++) {
+      const x = inst.basePos[i * 3 + 0]
+      const y = inst.basePos[i * 3 + 1]
+      const z = inst.basePos[i * 3 + 2]
+      const bob = Math.sin(t * (0.18 + inst.freq[i] * 0.12) + inst.phase[i]) * inst.bob[i]
+      const breathe = 1 + Math.sin(t * inst.freq[i] + inst.phase[i]) * inst.amp[i]
+
+      // hover: cresce e decai com inércia (nunca "pisca")
+      inst.boost[i] += ((i === hovered ? 1 : 0) - inst.boost[i]) * ease
+      const scaleBoost = 1 + inst.boost[i] * 0.85
+      const haloBoost = 1 + inst.boost[i] * 1.6
+
+      dummy.position.set(x, y + bob, z)
+      dummy.scale.setScalar(inst.coreScale[i] * breathe * scaleBoost)
+      dummy.updateMatrix()
+      cores.setMatrixAt(i, dummy.matrix)
+
+      dummy.scale.setScalar(inst.haloScale[i] * breathe * haloBoost)
+      dummy.updateMatrix()
+      halos.setMatrixAt(i, dummy.matrix)
+    }
+    cores.instanceMatrix.needsUpdate = true
+    halos.instanceMatrix.needsUpdate = true
+  })
+
+  const emitHover = useCallback(
+    (node, e) => {
+      let detail = null
+      if (node) {
+        // posição da estrela em pixels de tela — para o cursor magnético
+        projVec.set(node.pos[0] + GROUP_OFFSET_X, node.pos[1], node.pos[2]).project(camera)
+        detail = {
+          node,
+          x: e.nativeEvent?.clientX ?? 0,
+          y: e.nativeEvent?.clientY ?? 0,
+          sx: (projVec.x * 0.5 + 0.5) * size.width,
+          sy: (-projVec.y * 0.5 + 0.5) * size.height,
+        }
+      }
+      window.dispatchEvent(new CustomEvent('constelacao:hover', { detail }))
+    },
+    [camera, size]
+  )
+
+  return (
+    <group>
+      {/* HALOS — glow suave por trás dos núcleos */}
+      <instancedMesh
+        ref={halosRef}
+        args={[undefined, undefined, inst.n]}
+        frustumCulled={false}
+        renderOrder={1}
+        raycast={() => null}
+      >
+        <sphereGeometry args={[1, 16, 16]} />
+        <meshBasicMaterial
+          transparent
+          opacity={0.1}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </instancedMesh>
+
+      {/* CORES — núcleos nítidos (alvo do raycast/hover) */}
+      <instancedMesh
+        ref={coresRef}
+        args={[undefined, undefined, inst.n]}
+        frustumCulled={false}
+        renderOrder={2}
+        onPointerMove={(e) => {
+          e.stopPropagation()
+          const id = e.instanceId
+          if (id === undefined || id === hoveredRef.current) return
+          hoveredRef.current = id
+          emitHover(org.list[id], e)
+        }}
+        onPointerOut={(e) => {
+          hoveredRef.current = -1
+          emitHover(null, e)
+        }}
+        onClick={(e) => {
+          e.stopPropagation()
+          const id = e.instanceId
+          if (id === undefined) return
+          window.dispatchEvent(
+            new CustomEvent('constelacao:focus', { detail: { node: org.list[id] } })
+          )
+        }}
+      >
+        <icosahedronGeometry args={[1, 3]} />
+        <meshBasicMaterial toneMapped={false} />
+      </instancedMesh>
+    </group>
+  )
+}
