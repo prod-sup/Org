@@ -179,6 +179,7 @@ function build(src) {
         department: deptKey,
         color: dept.color,
         vacant: !!p.vacant,
+        photo: p.photo || null,
         managerId: -1,
         _lead: p.lead,
         _localIndex: localIndex,
@@ -267,6 +268,8 @@ function build(src) {
 // PEOPLE/DEPARTMENTS acima são o fallback caso o fetch falhe.
 let _cache = null
 
+const isValid = (j) => j && Array.isArray(j.people) && Array.isArray(j.departments)
+
 export async function loadOrganization() {
   if (_cache) return _cache
   let src = null
@@ -274,7 +277,21 @@ export async function loadOrganization() {
     const res = await fetch(`${import.meta.env.BASE_URL}equipe.json`, { cache: 'no-store' })
     if (res.ok) {
       const json = await res.json()
-      if (Array.isArray(json.people) && Array.isArray(json.departments)) src = json
+      if (isValid(json)) src = json
+
+      // fonte remota (Google Sheets via Apps Script) — se configurada e válida,
+      // tem prioridade; qualquer falha cai de volta para o equipe.json local
+      if (json?.fonte_remota) {
+        try {
+          const remote = await fetch(json.fonte_remota, { cache: 'no-store' })
+          if (remote.ok) {
+            const rjson = await remote.json()
+            if (isValid(rjson)) src = rjson
+          }
+        } catch {
+          // planilha fora do ar — segue com o arquivo local
+        }
+      }
     }
   } catch {
     // sem rede/arquivo — usa os dados embutidos

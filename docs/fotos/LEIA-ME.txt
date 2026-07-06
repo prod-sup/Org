@@ -1,0 +1,10 @@
+Fotos das pessoas
+=================
+1. Salve a foto aqui (quadrada fica melhor; ~400×400px, .jpg ou .png).
+   Ex.: fotos/brian.jpg
+2. No equipe.json, adicione o campo na pessoa:
+   "photo": "fotos/brian.jpg"
+3. Sem foto, o organograma mostra as iniciais na cor da área.
+
+No site publicado (GitHub Pages), suba a foto na pasta docs/fotos/
+e edite docs/equipe.json.

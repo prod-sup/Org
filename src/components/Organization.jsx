@@ -1,9 +1,10 @@
-import { useMemo, useRef, useLayoutEffect, useCallback } from 'react'
+import { useMemo, useRef, useLayoutEffect, useCallback, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOrganization, LEVELS } from '../data/organization'
 
 const dummy = new THREE.Object3D()
+const tmpColor = new THREE.Color()
 
 /**
  * Organization — as pessoas reais do Grupo Suprema como dois InstancedMesh:
@@ -22,8 +23,18 @@ export default function Organization() {
   const coresRef = useRef()
   const halosRef = useRef()
   const hoveredRef = useRef(-1)
+  const dimDeptRef = useRef(null) // área em destaque ('constelacao:dim') ou null
   const camera = useThree((s) => s.camera)
   const size = useThree((s) => s.size)
+
+  // Trilha do time: hover na legenda / painel de área acende só aquela área
+  useEffect(() => {
+    const onDim = (e) => {
+      dimDeptRef.current = e.detail?.dept ?? null
+    }
+    window.addEventListener('constelacao:dim', onDim)
+    return () => window.removeEventListener('constelacao:dim', onDim)
+  }, [])
 
   // Dados por instância (posições base, escalas, cores, fases de flutuação)
   const inst = useMemo(() => {
@@ -67,7 +78,8 @@ export default function Organization() {
       bob[i] = 0.035 + Math.random() * 0.05
     })
 
-    return { n, basePos, coreScale, haloScale, coreColor, haloColor, phase, freq, amp, bob, boost }
+    const dim = new Float32Array(n).fill(1) // fator de isolamento suavizado
+    return { n, basePos, coreScale, haloScale, coreColor, haloColor, phase, freq, amp, bob, boost, dim }
   }, [org])
 
   // Inicializa matrizes e cores das instâncias
@@ -107,6 +119,8 @@ export default function Organization() {
     const t = state.clock.elapsedTime
     const hovered = hoveredRef.current
     const ease = Math.min(1, delta * 7) // suavização do destaque
+    const dimEase = Math.min(1, delta * 4) // isolamento entra/sai mais lento
+    const dimDept = dimDeptRef.current
 
     for (let i = 0; i < inst.n; i++) {
       const x = inst.basePos[i * 3 + 0]
@@ -120,17 +134,32 @@ export default function Organization() {
       const scaleBoost = 1 + inst.boost[i] * 0.85
       const haloBoost = 1 + inst.boost[i] * 1.6
 
+      // isolamento: fora da área em destaque, a estrela adormece
+      const dimTarget =
+        dimDept && org.list[i].department !== dimDept && org.list[i].department !== 'Executivo'
+          ? 0.1
+          : 1
+      inst.dim[i] += (dimTarget - inst.dim[i]) * dimEase
+      const f = inst.dim[i]
+
+      tmpColor.copy(inst.coreColor[i]).multiplyScalar(f)
+      cores.setColorAt(i, tmpColor)
+      tmpColor.copy(inst.haloColor[i]).multiplyScalar(f)
+      halos.setColorAt(i, tmpColor)
+
       dummy.position.set(x, y + bob, z)
-      dummy.scale.setScalar(inst.coreScale[i] * breathe * scaleBoost)
+      dummy.scale.setScalar(inst.coreScale[i] * breathe * scaleBoost * (0.75 + f * 0.25))
       dummy.updateMatrix()
       cores.setMatrixAt(i, dummy.matrix)
 
-      dummy.scale.setScalar(inst.haloScale[i] * breathe * haloBoost)
+      dummy.scale.setScalar(inst.haloScale[i] * breathe * haloBoost * (0.6 + f * 0.4))
       dummy.updateMatrix()
       halos.setMatrixAt(i, dummy.matrix)
     }
     cores.instanceMatrix.needsUpdate = true
     halos.instanceMatrix.needsUpdate = true
+    if (cores.instanceColor) cores.instanceColor.needsUpdate = true
+    if (halos.instanceColor) halos.instanceColor.needsUpdate = true
   })
 
   const emitHover = useCallback(

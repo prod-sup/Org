@@ -10,6 +10,34 @@ function normalize(s) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 }
 
+/** Avatar — foto (campo "photo" do equipe.json) ou iniciais na cor da área. */
+function Avatar({ node, size = 44 }) {
+  const [error, setError] = useState(false)
+  const initials = node.name
+    .split(' ')
+    .filter((w) => w && w[0] === w[0].toUpperCase())
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+  const src = node.photo
+    ? import.meta.env.BASE_URL + node.photo.replace(/^\//, '')
+    : null
+  return (
+    <span
+      className="avatar"
+      style={{ width: size, height: size, fontSize: size * 0.36, '--dept': node.color }}
+    >
+      {src && !error ? (
+        <img src={src} alt="" loading="lazy" onError={() => setError(true)} />
+      ) : (
+        <b>{initials}</b>
+      )}
+    </span>
+  )
+}
+
+const TOUR_INTERVAL = 8000 // ms por área no modo apresentação
+
 /**
  * UI — camada editorial sobre o WebGL:
  * título serifado, legenda, stats, busca com fly-to, minimapa ♠,
@@ -25,8 +53,38 @@ export default function UI() {
   const [focused, setFocused] = useState(null)
   const [query, setQuery] = useState('')
   const [areaKey, setAreaKey] = useState(null) // painel lateral de área
+  const [tour, setTour] = useState(false)      // modo apresentação
+  const tourRef = useRef(false)
+  tourRef.current = tour
 
   const area = areaKey ? org.departments.find((d) => d.key === areaKey) : null
+
+  // isolamento visual acompanha o painel de área aberto
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('constelacao:dim', { detail: areaKey ? { dept: areaKey } : null })
+    )
+  }, [areaKey])
+
+  // ---- modo apresentação: voa de área em área a cada 8s ------------------------
+  useEffect(() => {
+    if (!tour) return
+    let i = 0
+    const step = () => {
+      const dept = org.departments[i % org.departments.length]
+      const head = [...dept.members].sort((a, b) => a.levelIndex - b.levelIndex)[0]
+      window.dispatchEvent(new CustomEvent('constelacao:area', { detail: { dept: dept.key } }))
+      if (head) window.dispatchEvent(new CustomEvent('constelacao:focus', { detail: { node: head } }))
+      i++
+    }
+    step()
+    const id = setInterval(step, TOUR_INTERVAL)
+    return () => {
+      clearInterval(id)
+      window.dispatchEvent(new CustomEvent('constelacao:focus', { detail: null }))
+      window.dispatchEvent(new CustomEvent('constelacao:area', { detail: null }))
+    }
+  }, [tour, org])
 
   // ---- busca -----------------------------------------------------------------
   const results = useMemo(() => {
@@ -54,7 +112,11 @@ export default function UI() {
     const onArea = (e) => setAreaKey(e.detail?.dept ?? null)
     const onKey = (e) => {
       if (e.key !== 'Escape') return
-      // ESC em camadas: primeiro solta a pessoa, depois fecha o painel de área
+      // ESC em camadas: para o tour, depois solta a pessoa, depois fecha o painel
+      if (tourRef.current) {
+        setTour(false)
+        return
+      }
       setFocused((f) => {
         if (f) {
           window.dispatchEvent(new CustomEvent('constelacao:focus', { detail: null }))
@@ -180,6 +242,24 @@ export default function UI() {
         <div className="ui-top-right ui-fade">
           <button
             type="button"
+            className={`ui-round ui-tour${tour ? ' is-on' : ''}`}
+            aria-label={tour ? 'Parar tour' : 'Iniciar tour'}
+            title={tour ? 'Parar tour (ESC)' : 'Tour pelas áreas'}
+            onClick={() => setTour((t) => !t)}
+          >
+            {tour ? (
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <path d="M8 5.5v13l11-6.5-11-6.5Z" />
+              </svg>
+            )}
+          </button>
+          <button
+            type="button"
             className="ui-round"
             aria-label="Tela cheia"
             title="Tela cheia"
@@ -248,6 +328,14 @@ export default function UI() {
               onClick={() =>
                 window.dispatchEvent(
                   new CustomEvent('constelacao:area', { detail: areaKey === d.key ? null : { dept: d.key } })
+                )
+              }
+              onMouseEnter={() =>
+                window.dispatchEvent(new CustomEvent('constelacao:dim', { detail: { dept: d.key } }))
+              }
+              onMouseLeave={() =>
+                window.dispatchEvent(
+                  new CustomEvent('constelacao:dim', { detail: areaKey ? { dept: areaKey } : null })
                 )
               }
             >
@@ -321,7 +409,7 @@ export default function UI() {
                     className={focused?.id === m.id ? 'is-current' : undefined}
                     onClick={() => focusNode(m)}
                   >
-                    <i className={`area-star lv-${m.levelIndex}`} />
+                    <Avatar node={m} size={34} />
                     <span>
                       <strong>{m.name}</strong>
                       {m.role}
@@ -350,6 +438,7 @@ export default function UI() {
               ✕
             </button>
           )}
+          <Avatar node={card} size={focused ? 56 : 44} />
           <span className="person-dept">{card.department}</span>
           <strong className="person-name">{card.name}</strong>
           <span className="person-role">{card.role}</span>

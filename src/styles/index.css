@@ -539,6 +539,43 @@ body {
 .person-close:hover { color: var(--gold-bright); }
 
 /* ---------------------------------------------------------------------------
+   AVATAR — foto do equipe.json ou iniciais na cor da área
+--------------------------------------------------------------------------- */
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--dept, #d8b56d) 55%, transparent);
+  background: color-mix(in srgb, var(--dept, #d8b56d) 14%, rgba(8, 8, 11, 0.8));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--dept, #d8b56d) 20%, transparent);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar b {
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--dept, #d8b56d) 80%, #fff);
+}
+
+.person-card .avatar { margin-bottom: 4px; }
+
+/* ---- botão de tour ---- */
+.ui-tour.is-on {
+  color: #1c1503;
+  background: linear-gradient(120deg, #e9cd8f, #c9a45e);
+  border-color: transparent;
+  box-shadow: 0 0 22px rgba(216, 181, 109, 0.35);
+}
+
+/* ---------------------------------------------------------------------------
    PAINEL DE ÁREA — lateral direita, time listado e clicável
 --------------------------------------------------------------------------- */
 .area-panel {
