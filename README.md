@@ -4,7 +4,7 @@ Experiência WebGL premium onde o organograma da empresa nasce de uma constelaç
 viva. Cada estrela é uma pessoa; a organização inteira formará um enorme naipe de
 espadas (♠) — mas isso só se revela conforme o usuário se aproxima.
 
-Esta é a **Etapa 1**: atmosfera, starfield, iluminação, câmera e pós-processamento.
+Status: **Etapas 1–3 concluídas** (atmosfera, organograma, conexões + fluxo).
 
 ## Rodar
 
@@ -75,10 +75,17 @@ Acessibilidade: `prefers-reduced-motion` desliga a intro e a flutuação da câm
 
 ## Roadmap
 
-- **Etapa 1 — Atmosfera** ✅ (esta entrega)
-- **Etapa 2 — Organograma**: 150 nós (CEO → Equipe) distribuídos formando o ♠,
+- **Etapa 1 — Atmosfera** ✅
+- **Etapa 2 — Organograma** ✅ 150 nós (CEO → Equipe) distribuídos formando o ♠,
   via `InstancedMesh`, com tamanho/brilho por nível.
-- **Etapa 3 — Conexões**: linhas douradas finas gestor↔subordinado + fluxo de partículas.
+- **Etapa 3 — Conexões** ✅ 250 linhas douradas (hierarquia + estratégicas) com
+  shimmer GLSL, e ~420 partículas de fluxo percorrendo as conexões na GPU
+  (`Connections.jsx` + `ParticleFlow.jsx`, 1 draw call cada).
+- **Direção de arte "Matter of Meaning"** ✅ silhueta matemática do ♠
+  (`spadeShape.js`: coração implícito invertido + cauda), `SpadeDust`
+  (contorno brilhante + preenchimento), `ConstellationWeb` (teia interna),
+  `Labels` (callouts de departamento), UI editorial completa (título serifado,
+  legenda, stats, nav, zoom funcional, tela cheia).
 - **Etapa 4 — Interações**: hover, halo, destaque de conexões, card do colaborador.
 - **Etapa 5 — Zoom inteligente**: poeira some ao aproximar, nós/detalhes emergem.
 - **Etapa 6 — Polimento**: LOD, timing, direção de arte final.
