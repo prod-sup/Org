@@ -1,6 +1,8 @@
 {
   "_como_editar": "Este arquivo alimenta o organograma. Para adicionar alguém: copie uma linha de 'people' e ajuste dept/name/role/level. 'level' aceita: CEO, Diretor, Coordenador, Analista, Assistente. 'lead' é o índice (começando em 0) do gestor direto DENTRO do mesmo departamento; omita para reportar ao CEO mais próximo. 'nick' (apelido), 'vacant' (vaga em aberto) e 'photo' (ex.: 'fotos/brian.jpg' — suba a imagem na pasta fotos/) são opcionais. Em 'departments', 'anchor' é a posição do aglomerado no naipe (x de -1.13 a 1.13, y de -1.38 a 1.0) e 'radius' o tamanho do aglomerado.",
 
+  "_verticais": "Opcional por pessoa: \"vertical\": [\"Poker\"] ou [\"Poker\",\"Bet\"] — em quais verticais da Suprema Gaming (Poker ♠, SX ♦, Bet ♣) a pessoa atua. Sem o campo = atua em todas. O nav do site filtra por vertical e mostra badges nos cards.",
+
   "_fonte_remota": "Opcional: preencha 'fonte_remota' com a URL de um Google Apps Script (veja apps-script/Code.gs no repositório) para os dados virem de uma planilha Google em vez deste arquivo. Deixe \"\" para usar este arquivo.",
   "fonte_remota": "",
 

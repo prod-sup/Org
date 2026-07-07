@@ -9,6 +9,22 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'docs',
+    rollupOptions: {
+      output: {
+        // three.js + pós-processamento num chunk próprio (cacheável e
+        // paralelo): o app carrega e pinta a UI antes do motor 3D chegar
+        manualChunks: {
+          'vendor-three': [
+            'three',
+            '@react-three/fiber',
+            '@react-three/drei',
+            '@react-three/postprocessing',
+            'postprocessing',
+          ],
+          'vendor-react': ['react', 'react-dom', 'gsap'],
+        },
+      },
+    },
   },
   server: {
     host: true,
