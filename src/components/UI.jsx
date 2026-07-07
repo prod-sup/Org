@@ -1,8 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { getOrganization, LEVELS } from '../data/organization'
-import { QUALITY } from '../config/constants'
-import { toggleQuality } from '../config/quality'
+import { SHAPES } from '../data/shapes'
+import { cycleMode, getMode } from '../config/quality'
+
+/** Badges ♠♦♣ — só quando a pessoa atua em verticais específicas. */
+function VerticalBadges({ node }) {
+  if (!node.verticals) return null
+  return (
+    <span className="v-badges">
+      {SHAPES.filter((s) => node.verticals.includes(s.key)).map((s) => (
+        <i key={s.key} title={s.key}>{s.symbol}</i>
+      ))}
+    </span>
+  )
+}
+
+const MODE_LABEL = {
+  auto: 'Qualidade automática (ajusta pelo FPS) — clique p/ modo leve',
+  lite: 'Modo leve fixo — clique p/ qualidade máxima',
+  high: 'Qualidade máxima fixa — clique p/ automático',
+}
 
 // normalização para o minimapa (coordenadas de mundo → SVG 120×132)
 const mapX = (x) => 60 + (x / 7.2) * 50
@@ -56,6 +74,26 @@ export default function UI() {
   const [query, setQuery] = useState('')
   const [areaKey, setAreaKey] = useState(null) // painel lateral de área
   const [tour, setTour] = useState(false)      // modo apresentação
+  const [perfMode, setPerfMode] = useState(getMode) // auto | lite | high
+  const [perfTier, setPerfTier] = useState(null)    // degrau atual (0..3)
+  const [vertical, setVertical] = useState(0)       // 0 ♠ Poker · 1 ♦ SX · 2 ♣ Bet
+
+  const switchVertical = (i) => {
+    setVertical(i)
+    window.dispatchEvent(
+      new CustomEvent('constelacao:vertical', { detail: { index: i, key: SHAPES[i].key } })
+    )
+  }
+
+  // pessoas visíveis na vertical ativa (sem campo "vertical" = atua em todas)
+  const inVertical = (n) => !n.verticals || n.verticals.includes(SHAPES[vertical].key)
+  const totalVertical = org.list.filter((n) => !n.vacant && inVertical(n)).length
+
+  useEffect(() => {
+    const onTier = (e) => setPerfTier(e.detail?.tier ?? null)
+    window.addEventListener('constelacao:tier', onTier)
+    return () => window.removeEventListener('constelacao:tier', onTier)
+  }, [])
   const tourRef = useRef(false)
   tourRef.current = tour
 
@@ -67,6 +105,32 @@ export default function UI() {
       new CustomEvent('constelacao:dim', { detail: areaKey ? { dept: areaKey } : null })
     )
   }, [areaKey])
+
+  // ---- modo recepção: tela parada por 75s inicia o tour sozinho ----------------
+  const autoTourRef = useRef(false)
+  useEffect(() => {
+    let idleTimer
+    const arm = () => {
+      clearTimeout(idleTimer)
+      // qualquer interação encerra um tour iniciado automaticamente
+      if (autoTourRef.current) {
+        autoTourRef.current = false
+        setTour(false)
+      }
+      idleTimer = setTimeout(() => {
+        if (tourRef.current) return
+        autoTourRef.current = true
+        setTour(true)
+      }, 75000)
+    }
+    arm()
+    const events = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart']
+    events.forEach((ev) => window.addEventListener(ev, arm, { passive: true }))
+    return () => {
+      clearTimeout(idleTimer)
+      events.forEach((ev) => window.removeEventListener(ev, arm))
+    }
+  }, [])
 
   // ---- modo apresentação: voa de área em área a cada 8s ------------------------
   useEffect(() => {
@@ -244,14 +308,10 @@ export default function UI() {
         <div className="ui-top-right ui-fade">
           <button
             type="button"
-            className={`ui-round ui-perf${QUALITY === 'lite' ? ' is-lite' : ''}`}
+            className={`ui-round ui-perf is-${perfMode}`}
             aria-label="Qualidade gráfica"
-            title={
-              QUALITY === 'lite'
-                ? 'Modo leve ativo (PC fraco) — clique para qualidade máxima'
-                : 'Qualidade máxima — clique para o modo leve'
-            }
-            onClick={() => toggleQuality(QUALITY)}
+            title={`${MODE_LABEL[perfMode]}${perfTier !== null ? ` · degrau atual: T${perfTier}` : ''}`}
+            onClick={() => setPerfMode(cycleMode())}
           >
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6">
               <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" strokeLinejoin="round" />
@@ -320,6 +380,9 @@ export default function UI() {
       </div>
 
       <div className="ui-left ui-fade">
+        <span className="ui-kicker">
+          {SHAPES[vertical].symbol} SUPREMA {SHAPES[vertical].key.toUpperCase()}
+        </span>
         <h1 className="ui-title">
           A <br />
           <em>Constelação</em>
@@ -385,17 +448,24 @@ export default function UI() {
 
       <footer className="ui-bottom">
         <div className="ui-stats ui-fade">
-          <span><strong>{TOTAL}</strong> pessoas</span>
+          <span><strong>{totalVertical}</strong> pessoas</span>
           <span className="ui-sep" />
           <span><strong>{AREAS}</strong> áreas</span>
           <span className="ui-sep" />
-          <span><strong>3</strong> CEOs</span>
+          <span><strong>3</strong> verticais</span>
         </div>
 
         <nav className="ui-nav ui-fade">
-          <button type="button">Universo</button>
-          <button type="button" className="is-active">Organização</button>
-          <button type="button">Legado</button>
+          {SHAPES.map((s, i) => (
+            <button
+              key={s.key}
+              type="button"
+              className={vertical === i ? 'is-active' : undefined}
+              onClick={() => switchVertical(i)}
+            >
+              <span className="ui-nav-suit">{s.symbol}</span> {s.key}
+            </button>
+          ))}
         </nav>
 
         <button type="button" className="ui-story ui-fade">
@@ -428,7 +498,7 @@ export default function UI() {
                   >
                     <Avatar node={m} size={34} />
                     <span>
-                      <strong>{m.name}</strong>
+                      <strong>{m.name} <VerticalBadges node={m} /></strong>
                       {m.role}
                     </span>
                     <em>{LEVELS[m.levelIndex].key}</em>
@@ -456,7 +526,9 @@ export default function UI() {
             </button>
           )}
           <Avatar node={card} size={focused ? 56 : 44} />
-          <span className="person-dept">{card.department}</span>
+          <span className="person-dept">
+            {card.department} <VerticalBadges node={card} />
+          </span>
           <strong className="person-name">{card.name}</strong>
           <span className="person-role">{card.role}</span>
           {focused && <span className="person-vacant">ESC para voltar à constelação</span>}

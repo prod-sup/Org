@@ -12,16 +12,42 @@ export const starVertexShader = /* glsl */ `
   uniform float uDriftAmplitude;
   uniform float uDriftSpeed;
 
+  // Morph entre as constelações (♠ ♦ ♣): 0=position, 1=aPosB, 2=aPosC.
+  // Camadas sem morph (StarField) deixam os uniforms em 0 → pos = position.
+  uniform float uShapeFrom;
+  uniform float uShapeTo;
+  uniform float uMorph;
+
   attribute float aScale;    // multiplicador de tamanho por partícula
   attribute float aRandom;   // semente aleatória por partícula
   attribute vec3  aColor;
+  attribute vec3  aPosB;     // posição na forma 1 (♦)
+  attribute vec3  aPosC;     // posição na forma 2 (♣)
 
   varying vec3  vColor;
   varying float vTwinkle;
   varying float vNearFade;
 
+  vec3 shapePos(float s) {
+    if (s < 0.5) return position;
+    if (s < 1.5) return aPosB;
+    return aPosC;
+  }
+
   void main() {
-    vec3 pos = position;
+    vec3 pos = shapePos(uShapeFrom);
+
+    // morph escalonado: cada partícula parte num instante próprio (organico,
+    // nunca em bloco) e se dispersa levemente no meio do voo (explosão suave)
+    if (uMorph > 0.0) {
+      float k = smoothstep(0.0, 1.0, clamp(uMorph * 1.45 - aRandom * 0.45, 0.0, 1.0));
+      vec3 target = shapePos(uShapeTo);
+      pos = mix(pos, target, k);
+      float burst = sin(k * 3.14159265);
+      pos.x += sin(aRandom * 39.0) * burst * (0.6 + aRandom * 1.8);
+      pos.y += cos(aRandom * 57.0) * burst * (0.6 + aRandom * 1.8);
+      pos.z += sin(aRandom * 73.0) * burst * (0.9 + aRandom * 2.2);
+    }
 
     // Oscilação lenta e orgânica (cada partícula com fase própria)
     float t = uTime * uDriftSpeed;

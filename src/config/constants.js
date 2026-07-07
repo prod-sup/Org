@@ -174,24 +174,37 @@ export const CONFIG = {
 }
 
 // ---------------------------------------------------------------------------
-// QUALIDADE — detecção automática de hardware fraco (src/config/quality.js).
-// No modo 'lite': ~70% menos partículas, sem nébula/grão/aberração/SMAA,
-// DPR limitado a 1.25. A cena continua idêntica em composição.
+// QUALIDADE ADAPTATIVA — 4 degraus. O primeiro corte é sempre RESOLUÇÃO
+// (fill rate é o gargalo real de partículas aditivas em GPU fraca; cortar
+// DPR preserva o visual). Partículas só caem nos últimos degraus.
 // ---------------------------------------------------------------------------
-import { detectQuality } from './quality'
+export const TIERS = [
+  { dpr: [1, 2.0], counts: 1.0,  nebula: true,  fullPost: true  }, // T0 máquina forte
+  { dpr: [1, 1.5], counts: 1.0,  nebula: true,  fullPost: true  }, // T1 perda ~invisível
+  { dpr: [1, 1.2], counts: 0.6,  nebula: false, fullPost: false }, // T2 integrada/notebook
+  { dpr: [1, 1.0], counts: 0.35, nebula: false, fullPost: false }, // T3 PC bem fraco
+]
 
-export const QUALITY = detectQuality()
-CONFIG.quality = QUALITY
-
-if (QUALITY === 'lite') {
-  CONFIG.dust.count = 2400
-  CONFIG.gold.count = 550
-  CONFIG.spadeOutline.count = 1500
-  CONFIG.spadeFill.count = 2400
-  CONFIG.web.points = 320
-  CONFIG.flow.count = 160
-  CONFIG.post.bloom.radius = 0.75
-  CONFIG.post.bloom.intensity = 0.5
+/**
+ * Deriva o CONFIG para um degrau. As CONTAGENS não mudam aqui — os buffers
+ * são alocados uma vez no total e o corte por degrau acontece via
+ * geometry.setDrawRange (tierBus.js). Assim trocar de degrau não reconstrói
+ * nada: zero engasgo na própria troca. As seções de partículas mantêm a
+ * MESMA identidade de objeto para os useMemo não recriarem geometria.
+ */
+export function deriveConfig(tier) {
+  const t = TIERS[Math.max(0, Math.min(TIERS.length - 1, tier))]
+  return {
+    ...CONFIG,
+    tier: { ...t, index: tier },
+    post: {
+      ...CONFIG.post,
+      bloom: {
+        ...CONFIG.post.bloom,
+        radius: t.fullPost ? CONFIG.post.bloom.radius : 0.75,
+      },
+    },
+  }
 }
 
 export default CONFIG

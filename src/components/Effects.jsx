@@ -9,7 +9,6 @@ import {
 } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 import { Vector2 } from 'three'
-import { QUALITY } from '../config/constants'
 
 /**
  * Effects — camada de pós-processamento premium.
@@ -20,7 +19,7 @@ import { QUALITY } from '../config/constants'
  * então o depth buffer não as vê e o efeito borra a cena inteira. A sensação
  * de profundidade vem das camadas de partículas em Z + paralaxe + névoa.
  */
-export default function Effects({ cfg }) {
+export default function Effects({ cfg, fullPost = true }) {
   const chromaOffset = useMemo(
     () => new Vector2(cfg.chromatic.offset, cfg.chromatic.offset),
     [cfg.chromatic.offset]
@@ -28,7 +27,7 @@ export default function Effects({ cfg }) {
 
   // PC fraco: só o essencial — bloom (a alma do visual) + vignette.
   // Sem aberração cromática, grão e SMAA (cada um é um passe de tela cheia).
-  if (QUALITY === 'lite') {
+  if (!fullPost) {
     return (
       <EffectComposer multisampling={0} disableNormalPass>
         <Bloom

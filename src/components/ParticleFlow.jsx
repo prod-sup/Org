@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOrganization } from '../data/organization'
 import { flowVertexShader, flowFragmentShader } from '../shaders/flowPoints'
+import { useTierDrawRange } from '../config/tierBus'
 
 /**
  * ParticleFlow — informação circulando pela empresa.
@@ -11,7 +12,11 @@ import { flowVertexShader, flowFragmentShader } from '../shaders/flowPoints'
  */
 export default function ParticleFlow({ cfg }) {
   const materialRef = useRef()
+  const pointsRef = useRef()
   const org = useMemo(() => getOrganization(), [])
+
+  // menos partículas de fluxo nos degraus baixos (links já são aleatórios)
+  useTierDrawRange(pointsRef)
 
   const geometry = useMemo(() => {
     const { links, byId } = org
@@ -61,7 +66,7 @@ export default function ParticleFlow({ cfg }) {
   })
 
   return (
-    <points geometry={geometry} frustumCulled={false} renderOrder={1}>
+    <points ref={pointsRef} geometry={geometry} frustumCulled={false} renderOrder={1}>
       <shaderMaterial
         ref={materialRef}
         uniforms={uniforms}

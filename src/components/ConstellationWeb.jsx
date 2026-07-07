@@ -1,8 +1,10 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import gsap from 'gsap'
 import { lineVertexShader, lineFragmentShader } from '../shaders/connectionLines'
 import { SPADE_SHAPE, sampleInside, sampleOutline, toWorld } from '../data/spadeShape'
+import { useTierDrawRange } from '../config/tierBus'
 
 /**
  * ConstellationWeb — a teia fina dourada que preenche o interior do ♠
@@ -13,6 +15,10 @@ import { SPADE_SHAPE, sampleInside, sampleOutline, toWorld } from '../data/spade
  */
 export default function ConstellationWeb({ cfg }) {
   const materialRef = useRef()
+  const linesRef = useRef()
+
+  // densidade da teia por degrau (drawRange em pares de vértices)
+  useTierDrawRange(linesRef, { even: true })
 
   const geometry = useMemo(() => {
     const inner = sampleInside(cfg.points)
@@ -41,11 +47,24 @@ export default function ConstellationWeb({ cfg }) {
       }
     }
 
+    // embaralha os SEGMENTOS (pares) — o prefixo do drawRange vira uma
+    // subamostra uniforme da teia, não um recorte de região
+    for (let k = segs.length / 2 - 1; k > 0; k--) {
+      const j = (Math.random() * (k + 1)) | 0
+      for (let e = 0; e < 2; e++) {
+        const tmpIdx = segs[k * 2 + e]
+        segs[k * 2 + e] = segs[j * 2 + e]
+        segs[j * 2 + e] = tmpIdx
+      }
+    }
+
     const n = segs.length
     const positions = new Float32Array(n * 3)
     const progress = new Float32Array(n)
     const seeds = new Float32Array(n)
     const strengths = new Float32Array(n)
+    const colors = new Float32Array(n * 3)
+    const webColor = new THREE.Color(cfg.color)
     for (let k = 0; k < n; k += 2) {
       const seed = Math.random()
       for (let e = 0; e < 2; e++) {
@@ -56,6 +75,9 @@ export default function ConstellationWeb({ cfg }) {
         progress[k + e] = e
         seeds[k + e] = seed
         strengths[k + e] = 0.6 + Math.random() * 0.4
+        colors[(k + e) * 3 + 0] = webColor.r
+        colors[(k + e) * 3 + 1] = webColor.g
+        colors[(k + e) * 3 + 2] = webColor.b
       }
     }
 
@@ -64,24 +86,39 @@ export default function ConstellationWeb({ cfg }) {
     geo.setAttribute('aProgress', new THREE.BufferAttribute(progress, 1))
     geo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 1))
     geo.setAttribute('aStrength', new THREE.BufferAttribute(strengths, 1))
+    geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3))
     return geo
   }, [cfg])
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uColor: { value: new THREE.Color(cfg.color) },
       uOpacity: { value: cfg.opacity },
     }),
     [cfg]
   )
+
+  // a teia pertence ao interior do ♠ — some suavemente nas outras verticais
+  useEffect(() => {
+    const onVertical = (e) => {
+      const u = materialRef.current?.uniforms
+      if (!u) return
+      gsap.to(u.uOpacity, {
+        value: (e.detail?.index ?? 0) === 0 ? cfg.opacity : 0,
+        duration: 1.2,
+        ease: 'power2.out',
+      })
+    }
+    window.addEventListener('constelacao:vertical', onVertical)
+    return () => window.removeEventListener('constelacao:vertical', onVertical)
+  }, [cfg.opacity])
 
   useFrame((_, delta) => {
     if (materialRef.current) materialRef.current.uniforms.uTime.value += delta * 0.5
   })
 
   return (
-    <lineSegments geometry={geometry} frustumCulled={false} renderOrder={0}>
+    <lineSegments ref={linesRef} geometry={geometry} frustumCulled={false} renderOrder={0}>
       <shaderMaterial
         ref={materialRef}
         uniforms={uniforms}

@@ -180,6 +180,8 @@ function build(src) {
         color: dept.color,
         vacant: !!p.vacant,
         photo: p.photo || null,
+        // verticais em que atua (Poker/SX/Bet); null = todas
+        verticals: Array.isArray(p.vertical) && p.vertical.length ? p.vertical : null,
         managerId: -1,
         _lead: p.lead,
         _localIndex: localIndex,

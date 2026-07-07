@@ -16,6 +16,16 @@ export default function App() {
     loadOrganization().then(() => setReady(true))
   }, [])
 
+  // dissolve o splash (♠ pulsando do index.html) quando a cena monta
+  useEffect(() => {
+    if (!ready) return
+    const splash = document.getElementById('splash')
+    if (!splash) return
+    splash.classList.add('done')
+    const t = setTimeout(() => splash.remove(), 1000)
+    return () => clearTimeout(t)
+  }, [ready])
+
   if (!ready) return <div className="app-root" />
 
   return (

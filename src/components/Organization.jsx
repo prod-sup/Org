@@ -23,17 +23,27 @@ export default function Organization() {
   const coresRef = useRef()
   const halosRef = useRef()
   const hoveredRef = useRef(-1)
-  const dimDeptRef = useRef(null) // área em destaque ('constelacao:dim') ou null
+  const dimDeptRef = useRef(null)     // área em destaque ('constelacao:dim')
+  const dimVerticalRef = useRef(null) // vertical ativa (Poker/SX/Bet)
   const camera = useThree((s) => s.camera)
   const size = useThree((s) => s.size)
 
-  // Trilha do time: hover na legenda / painel de área acende só aquela área
+  // Trilha do time: hover na legenda / painel / vertical acende só quem pertence
   useEffect(() => {
     const onDim = (e) => {
       dimDeptRef.current = e.detail?.dept ?? null
+      if (e.detail && 'vertical' in e.detail) dimVerticalRef.current = e.detail.vertical
+      if (!e.detail) dimDeptRef.current = null
+    }
+    const onVertical = (e) => {
+      dimVerticalRef.current = e.detail?.key && e.detail.index !== 0 ? e.detail.key : null
     }
     window.addEventListener('constelacao:dim', onDim)
-    return () => window.removeEventListener('constelacao:dim', onDim)
+    window.addEventListener('constelacao:vertical', onVertical)
+    return () => {
+      window.removeEventListener('constelacao:dim', onDim)
+      window.removeEventListener('constelacao:vertical', onVertical)
+    }
   }, [])
 
   // Dados por instância (posições base, escalas, cores, fases de flutuação)
@@ -134,11 +144,17 @@ export default function Organization() {
       const scaleBoost = 1 + inst.boost[i] * 0.85
       const haloBoost = 1 + inst.boost[i] * 1.6
 
-      // isolamento: fora da área em destaque, a estrela adormece
-      const dimTarget =
-        dimDept && org.list[i].department !== dimDept && org.list[i].department !== 'Executivo'
-          ? 0.1
-          : 1
+      // isolamento: fora da área em destaque OU fora da vertical ativa,
+      // a estrela adormece (Executivo permanece aceso como referência)
+      const node = org.list[i]
+      const foraDaArea =
+        dimDept && node.department !== dimDept && node.department !== 'Executivo'
+      const foraDaVertical =
+        dimVerticalRef.current &&
+        node.verticals &&
+        !node.verticals.includes(dimVerticalRef.current) &&
+        node.department !== 'Executivo'
+      const dimTarget = foraDaArea || foraDaVertical ? 0.1 : 1
       inst.dim[i] += (dimTarget - inst.dim[i]) * dimEase
       const f = inst.dim[i]
 
@@ -227,7 +243,8 @@ export default function Organization() {
           )
         }}
       >
-        <icosahedronGeometry args={[1, 3]} />
+        {/* detalhe 2 = 320 triângulos/nó (era 1280) — invisível com bloom, 4× mais leve */}
+        <icosahedronGeometry args={[1, 2]} />
         <meshBasicMaterial toneMapped={false} />
       </instancedMesh>
     </group>

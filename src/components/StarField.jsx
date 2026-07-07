@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { starVertexShader, starFragmentShader } from '../shaders/starPoints'
+import { useTierDrawRange } from '../config/tierBus'
 
 /**
  * Gera as posições e atributos de uma camada de partículas.
@@ -54,6 +55,11 @@ function buildLayer(cfg) {
  */
 function ParticleLayer({ cfg }) {
   const materialRef = useRef()
+  const pointsRef = useRef()
+
+  // densidade por degrau (drawRange) — as posições já nascem aleatórias,
+  // então qualquer prefixo do buffer é uma subamostra uniforme
+  useTierDrawRange(pointsRef)
 
   const { positions, scales, randoms, colorArr } = useMemo(
     () => buildLayer(cfg),
@@ -80,7 +86,7 @@ function ParticleLayer({ cfg }) {
   })
 
   return (
-    <points frustumCulled={false}>
+    <points ref={pointsRef} frustumCulled={false}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"

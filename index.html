@@ -5,11 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#02030a" />
     <title>A Constelação · Grupo Suprema</title>
+
+    <!-- link bonito no WhatsApp/Slack/Teams -->
+    <meta name="description" content="O organograma vivo da Suprema Gaming — uma constelação de mentes conectadas por propósito. Poker ♠ · SX ♦ · Bet ♣" />
+    <meta property="og:title" content="A Constelação · Grupo Suprema" />
+    <meta property="og:description" content="O organograma vivo da Suprema Gaming — explore as pessoas e áreas como estrelas de uma constelação." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+
+    <!-- favicon ♠ dourado (SVG inline — nenhum arquivo extra) -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='72' font-size='72' text-anchor='middle' fill='%23d8b56d'%3E%E2%99%A0%3C/text%3E%3C/svg%3E" />
+
+    <!-- fontes sem bloquear o render (o CSS usa @import como fallback) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
     <style>
       html, body { margin: 0; background: #02030a; }
+
+      /* splash: um ♠ respirando enquanto o motor 3D carrega (~340 KB gzip).
+         O App remove assim que a cena monta. */
+      #splash {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #02030a;
+        z-index: 99;
+        transition: opacity 0.9s ease;
+      }
+      #splash.done { opacity: 0; pointer-events: none; }
+      #splash span {
+        font-size: 54px;
+        color: #d8b56d;
+        text-shadow: 0 0 30px rgba(216, 181, 109, 0.55);
+        animation: splashPulse 1.8s ease-in-out infinite;
+      }
+      @keyframes splashPulse {
+        0%, 100% { opacity: 0.35; transform: scale(0.94); }
+        50%      { opacity: 1; transform: scale(1.06); }
+      }
     </style>
   </head>
   <body>
+    <div id="splash" aria-hidden="true"><span>♠</span></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
