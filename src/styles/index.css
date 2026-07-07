@@ -567,6 +567,13 @@ body {
 
 .person-card .avatar { margin-bottom: 4px; }
 
+/* ---- botão de qualidade (⚡ modo leve para PC fraco) ---- */
+.ui-perf.is-lite {
+  color: var(--gold-bright);
+  border-color: rgba(216, 181, 109, 0.5);
+  box-shadow: 0 0 14px rgba(216, 181, 109, 0.18);
+}
+
 /* ---- botão de tour ---- */
 .ui-tour.is-on {
   color: #1c1503;

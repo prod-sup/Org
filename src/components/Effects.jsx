@@ -9,6 +9,7 @@ import {
 } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 import { Vector2 } from 'three'
+import { QUALITY } from '../config/constants'
 
 /**
  * Effects — camada de pós-processamento premium.
@@ -24,6 +25,27 @@ export default function Effects({ cfg }) {
     () => new Vector2(cfg.chromatic.offset, cfg.chromatic.offset),
     [cfg.chromatic.offset]
   )
+
+  // PC fraco: só o essencial — bloom (a alma do visual) + vignette.
+  // Sem aberração cromática, grão e SMAA (cada um é um passe de tela cheia).
+  if (QUALITY === 'lite') {
+    return (
+      <EffectComposer multisampling={0} disableNormalPass>
+        <Bloom
+          intensity={cfg.bloom.intensity}
+          luminanceThreshold={cfg.bloom.luminanceThreshold}
+          luminanceSmoothing={cfg.bloom.luminanceSmoothing}
+          mipmapBlur={cfg.bloom.mipmapBlur}
+          radius={cfg.bloom.radius}
+        />
+        <Vignette
+          offset={cfg.vignette.offset}
+          darkness={cfg.vignette.darkness}
+          eskil={false}
+        />
+      </EffectComposer>
+    )
+  }
 
   return (
     <EffectComposer multisampling={0} disableNormalPass>

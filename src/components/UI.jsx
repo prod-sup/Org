@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { getOrganization, LEVELS } from '../data/organization'
+import { QUALITY } from '../config/constants'
+import { toggleQuality } from '../config/quality'
 
 // normalização para o minimapa (coordenadas de mundo → SVG 120×132)
 const mapX = (x) => 60 + (x / 7.2) * 50
@@ -240,6 +242,21 @@ export default function UI() {
         </div>
 
         <div className="ui-top-right ui-fade">
+          <button
+            type="button"
+            className={`ui-round ui-perf${QUALITY === 'lite' ? ' is-lite' : ''}`}
+            aria-label="Qualidade gráfica"
+            title={
+              QUALITY === 'lite'
+                ? 'Modo leve ativo (PC fraco) — clique para qualidade máxima'
+                : 'Qualidade máxima — clique para o modo leve'
+            }
+            onClick={() => toggleQuality(QUALITY)}
+          >
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" strokeLinejoin="round" />
+            </svg>
+          </button>
           <button
             type="button"
             className={`ui-round ui-tour${tour ? ' is-on' : ''}`}

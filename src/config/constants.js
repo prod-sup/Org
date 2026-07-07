@@ -173,4 +173,25 @@ export const CONFIG = {
   },
 }
 
+// ---------------------------------------------------------------------------
+// QUALIDADE — detecção automática de hardware fraco (src/config/quality.js).
+// No modo 'lite': ~70% menos partículas, sem nébula/grão/aberração/SMAA,
+// DPR limitado a 1.25. A cena continua idêntica em composição.
+// ---------------------------------------------------------------------------
+import { detectQuality } from './quality'
+
+export const QUALITY = detectQuality()
+CONFIG.quality = QUALITY
+
+if (QUALITY === 'lite') {
+  CONFIG.dust.count = 2400
+  CONFIG.gold.count = 550
+  CONFIG.spadeOutline.count = 1500
+  CONFIG.spadeFill.count = 2400
+  CONFIG.web.points = 320
+  CONFIG.flow.count = 160
+  CONFIG.post.bloom.radius = 0.75
+  CONFIG.post.bloom.intensity = 0.5
+}
+
 export default CONFIG
