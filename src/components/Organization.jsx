@@ -24,7 +24,7 @@ export default function Organization() {
   const halosRef = useRef()
   const hoveredRef = useRef(-1)
   const dimDeptRef = useRef(null)     // área em destaque ('constelacao:dim')
-  const dimVerticalRef = useRef(null) // vertical ativa (Poker/SX/Bet)
+  const dimVerticalRef = useRef('Poker') // vertical ativa (Poker/SX/Bet; null = todas)
   const camera = useThree((s) => s.camera)
   const size = useThree((s) => s.size)
 
@@ -36,7 +36,9 @@ export default function Organization() {
       if (!e.detail) dimDeptRef.current = null
     }
     const onVertical = (e) => {
-      dimVerticalRef.current = e.detail?.key && e.detail.index !== 0 ? e.detail.key : null
+      // 'Suprema' é a visão de grupo: sem filtro, todo mundo aceso
+      dimVerticalRef.current =
+        e.detail?.key && e.detail.key !== 'Suprema' ? e.detail.key : null
     }
     window.addEventListener('constelacao:dim', onDim)
     window.addEventListener('constelacao:vertical', onVertical)
@@ -144,8 +146,9 @@ export default function Organization() {
       const scaleBoost = 1 + inst.boost[i] * 0.85
       const haloBoost = 1 + inst.boost[i] * 1.6
 
-      // isolamento: fora da área em destaque OU fora da vertical ativa,
-      // a estrela adormece (Executivo permanece aceso como referência)
+      // isolamento: fora da área em destaque a estrela adormece (Executivo
+      // fica como referência); fora da vertical ativa ela SOME — cada
+      // constelação só mostra o próprio time
       const node = org.list[i]
       const foraDaArea =
         dimDept && node.department !== dimDept && node.department !== 'Executivo'
@@ -153,7 +156,7 @@ export default function Organization() {
         dimVerticalRef.current &&
         node.verticals &&
         !node.verticals.includes(dimVerticalRef.current)
-      const dimTarget = foraDaArea || foraDaVertical ? 0.1 : 1
+      const dimTarget = foraDaVertical ? 0 : foraDaArea ? 0.1 : 1
       inst.dim[i] += (dimTarget - inst.dim[i]) * dimEase
       const f = inst.dim[i]
 
@@ -226,6 +229,7 @@ export default function Organization() {
           e.stopPropagation()
           const id = e.instanceId
           if (id === undefined || id === hoveredRef.current) return
+          if (inst.dim[id] < 0.2) return // invisível na vertical ativa
           hoveredRef.current = id
           emitHover(org.list[id], e)
         }}
@@ -236,7 +240,7 @@ export default function Organization() {
         onClick={(e) => {
           e.stopPropagation()
           const id = e.instanceId
-          if (id === undefined) return
+          if (id === undefined || inst.dim[id] < 0.2) return
           window.dispatchEvent(
             new CustomEvent('constelacao:focus', { detail: { node: org.list[id] } })
           )

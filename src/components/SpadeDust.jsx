@@ -45,6 +45,7 @@ function buildDust(cfg, kind) {
   const positions = new Float32Array(count * 3) // forma 0 (♠)
   const posB = new Float32Array(count * 3)      // forma 1 (♦)
   const posC = new Float32Array(count * 3)      // forma 2 (♣)
+  const posD = new Float32Array(count * 3)      // forma 3 (S Suprema)
   const scales = new Float32Array(count)
   const randoms = new Float32Array(count)
   const colorArr = new Float32Array(count * 3)
@@ -57,7 +58,7 @@ function buildDust(cfg, kind) {
     kind === 'outline' ? bandedOutline(shape, count) : shape.sampleInside(count)
   )
 
-  const buffers = [positions, posB, posC]
+  const buffers = [positions, posB, posC, posD]
 
   // slots embaralhados: o prefixo do buffer é uma subamostra uniforme do
   // desenho inteiro → o drawRange por degrau reduz densidade, não recorta
@@ -75,7 +76,7 @@ function buildDust(cfg, kind) {
     const zJitter = (Math.random() * 2 - 1) * SPADE_SHAPE.depth * (kind === 'outline' ? 0.7 : 1.2)
     let band = 1
 
-    for (let s = 0; s < 3; s++) {
+    for (let s = 0; s < SHAPES.length; s++) {
       const pts = perShape[s]
       const p = pts[idx % pts.length] // amostra sequencial; escrita no slot embaralhado
       if (s === 0) band = p.band ?? 1
@@ -99,7 +100,7 @@ function buildDust(cfg, kind) {
     colorArr[i * 3 + 1] = tmp.g
     colorArr[i * 3 + 2] = tmp.b
   }
-  return { positions, posB, posC, scales, randoms, colorArr }
+  return { positions, posB, posC, posD, scales, randoms, colorArr }
 }
 
 function DustLayer({ cfg, kind }) {
@@ -163,6 +164,7 @@ function DustLayer({ cfg, kind }) {
         <bufferAttribute attach="attributes-position" count={data.positions.length / 3} array={data.positions} itemSize={3} />
         <bufferAttribute attach="attributes-aPosB" count={data.posB.length / 3} array={data.posB} itemSize={3} />
         <bufferAttribute attach="attributes-aPosC" count={data.posC.length / 3} array={data.posC} itemSize={3} />
+        <bufferAttribute attach="attributes-aPosD" count={data.posD.length / 3} array={data.posD} itemSize={3} />
         <bufferAttribute attach="attributes-aScale" count={data.scales.length} array={data.scales} itemSize={1} />
         <bufferAttribute attach="attributes-aRandom" count={data.randoms.length} array={data.randoms} itemSize={1} />
         <bufferAttribute attach="attributes-aColor" count={data.colorArr.length / 3} array={data.colorArr} itemSize={3} />

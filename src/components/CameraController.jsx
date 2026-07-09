@@ -27,6 +27,34 @@ export default function CameraController({ cfg }) {
   const zoom = useRef(0)          // zoom pedido pela UI (+/−)
   const hoverT = useRef({ v: 0 }) // 0→1 quando uma estrela está em hover
   const focus = useRef(null)      // Vector3 da pessoa focada (mundo) ou null
+  const pull = useRef({ v: 0 })   // dolly-out cinematográfico durante o morph
+  const wide = useRef({ v: 0 })   // recuo extra persistente na visão Suprema (S)
+  const lastEmit = useRef(0)      // throttle do evento p/ o minimapa
+
+  // Troca de constelação: a câmera recua enquanto as partículas voam
+  // (dolly-out → dolly-in), e fica mais aberta na visão de grupo (S)
+  useEffect(() => {
+    const onVertical = (e) => {
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (!reduced) {
+        gsap.killTweensOf(pull.current)
+        gsap.to(pull.current, {
+          v: 1,
+          duration: 1.1,
+          ease: 'power2.out',
+          onComplete: () =>
+            gsap.to(pull.current, { v: 0, duration: 1.6, ease: 'power2.inOut' }),
+        })
+      }
+      gsap.to(wide.current, {
+        v: e.detail?.key === 'Suprema' ? 1 : 0,
+        duration: reduced ? 0 : 2.2,
+        ease: 'power2.inOut',
+      })
+    }
+    window.addEventListener('constelacao:vertical', onVertical)
+    return () => window.removeEventListener('constelacao:vertical', onVertical)
+  }, [])
 
   // Zoom da UI: aproxima/afasta a posição de repouso com a mesma inércia
   useEffect(() => {
@@ -127,6 +155,7 @@ export default function CameraController({ cfg }) {
         cfg.base[0] + pointer.x * strength,
         cfg.base[1] + pointer.y * strength + Math.sin(t * cfg.floatSpeed) * floatAmp,
         fitZ - zoom.current - hoverT.current.v * 1.6 +
+          pull.current.v * 6 + wide.current.v * 4 +
           Math.cos(t * cfg.floatSpeed * 0.7) * floatAmp * 0.5
       )
       lookTarget.current.set(0, 0, 0)
@@ -137,6 +166,27 @@ export default function CameraController({ cfg }) {
     lookCur.current.lerp(lookTarget.current, cfg.parallaxDamping * 1.4)
     camera.position.copy(current.current)
     camera.lookAt(lookCur.current)
+
+    // minimapa: para onde a câmera olha (coordenadas do naipe) + distância
+    if (t - lastEmit.current > 0.15) {
+      lastEmit.current = t
+      window.dispatchEvent(
+        new CustomEvent('constelacao:camera', {
+          // focado: o ponto exato da pessoa; livre: o passeio do parallax
+          detail: focus.current
+            ? {
+                x: lookCur.current.x - GROUP_OFFSET_X,
+                y: lookCur.current.y,
+                z: current.current.z - lookCur.current.z,
+              }
+            : {
+                x: (current.current.x - cfg.base[0]) * 1.4,
+                y: (current.current.y - cfg.base[1]) * 1.4,
+                z: current.current.z,
+              },
+        })
+      )
+    }
   })
 
   return null

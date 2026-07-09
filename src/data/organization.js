@@ -56,7 +56,7 @@ const PEOPLE = [
   { dept: 'Executivo', name: 'Rafael Silva',     nick: 'Rafa', role: 'CEO', level: 'CEO', vertical: ['Poker'] },
   { dept: 'Executivo', name: 'Eber Coutinho',    role: 'CEO', level: 'CEO', vertical: ['Poker'] },
   // Suprema SX — liderança própria da vertical ♦
-  { dept: 'Executivo', name: 'Laza',             role: 'CEO SX', level: 'CEO', vertical: ['SX'] },
+  { dept: 'Executivo', name: 'Lanza',             role: 'CEO SX', level: 'CEO', vertical: ['SX'] },
   { dept: 'Executivo', name: 'Fábio Makoto',     role: 'Diretor SX', level: 'Diretor', lead: 3, vertical: ['SX'] },
 
   // Produtos

@@ -24,7 +24,7 @@
     { "dept": "Executivo", "name": "Vasco Tavares", "role": "CEO", "level": "CEO", "vertical": ["Poker"] },
     { "dept": "Executivo", "name": "Rafael Silva", "nick": "Rafa", "role": "CEO", "level": "CEO", "vertical": ["Poker"] },
     { "dept": "Executivo", "name": "Eber Coutinho", "role": "CEO", "level": "CEO", "vertical": ["Poker"] },
-    { "dept": "Executivo", "name": "Laza", "role": "CEO SX", "level": "CEO", "vertical": ["SX"] },
+    { "dept": "Executivo", "name": "Lanza", "role": "CEO SX", "level": "CEO", "vertical": ["SX"] },
     { "dept": "Executivo", "name": "Fábio Makoto", "role": "Diretor SX", "level": "Diretor", "lead": 3, "vertical": ["SX"] },
 
     { "dept": "Produtos", "name": "Bruno Larotonda", "nick": "Lala", "role": "Coordenador de Produtos", "level": "Coordenador", "vertical": ["Poker"] },

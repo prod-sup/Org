@@ -1,18 +1,22 @@
 import { useMemo } from 'react'
 import { Html } from '@react-three/drei'
 import { getOrganization } from '../data/organization'
+import { useActiveVertical, nodeInVertical } from './Connections'
 
 /**
  * Labels — callouts de área (anel + linha-guia + texto), como na referência.
  * Ancorados no membro mais externo de cada aglomerado; o lado do texto segue
  * o lado do nó no naipe. Poucos elementos Html — custo irrisório.
+ * Só as áreas com gente na vertical ativa aparecem.
  */
 export default function Labels() {
+  const vertical = useActiveVertical()
   const anchors = useMemo(() => {
     const org = getOrganization()
     const CY = 2.52 // centro vertical do naipe em coordenadas do grupo
-    return org.departments.map((dept) => {
-      const members = dept.members
+    return org.departments.flatMap((dept) => {
+      const members = dept.members.filter((m) => nodeInVertical(m, vertical))
+      if (!members.length) return []
       const cx = members.reduce((s, n) => s + n.pos[0], 0) / members.length
       const cy = members.reduce((s, n) => s + n.pos[1], 0) / members.length
       const len = Math.hypot(cx, cy - CY) || 1
@@ -25,15 +29,15 @@ export default function Labels() {
         if (proj > best) { best = proj; anchor = m }
       }
       const filled = members.filter((m) => !m.vacant).length
-      return {
+      return [{
         key: dept.key,
         pos: anchor.pos,
         color: dept.color,
         count: filled,
         side: anchor.pos[0] >= 0 ? 'right' : 'left',
-      }
+      }]
     })
-  }, [])
+  }, [vertical])
 
   return (
     <group>

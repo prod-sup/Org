@@ -65,8 +65,6 @@ const TOUR_INTERVAL = 8000 // ms por área no modo apresentação
  */
 export default function UI() {
   const org = getOrganization()
-  const TOTAL = org.list.filter((n) => !n.vacant).length
-  const AREAS = org.departments.length
 
   const rootRef = useRef(null)
   const [hover, setHover] = useState(null)
@@ -76,18 +74,50 @@ export default function UI() {
   const [tour, setTour] = useState(false)      // modo apresentação
   const [perfMode, setPerfMode] = useState(getMode) // auto | lite | high
   const [perfTier, setPerfTier] = useState(null)    // degrau atual (0..3)
-  const [vertical, setVertical] = useState(0)       // 0 ♠ Poker · 1 ♦ SX · 2 ♣ Bet
+  const [vertical, setVertical] = useState(0)       // índice em SHAPES (♠ ♦ ♣ S)
+  const [cam, setCam] = useState(null)              // câmera p/ o minimapa
+
+  // posição/zoom da câmera → indicador no minimapa; só re-renderiza quando
+  // o movimento é perceptível (economia real em PC fraco)
+  useEffect(() => {
+    const onCam = (e) => {
+      const d = e.detail
+      setCam((prev) =>
+        prev &&
+        Math.abs(prev.x - d.x) < 0.06 &&
+        Math.abs(prev.y - d.y) < 0.06 &&
+        Math.abs(prev.z - d.z) < 0.15
+          ? prev
+          : d
+      )
+    }
+    window.addEventListener('constelacao:camera', onCam)
+    return () => window.removeEventListener('constelacao:camera', onCam)
+  }, [])
 
   const switchVertical = (i) => {
     setVertical(i)
+    // solta pessoa/área do contexto anterior — podem nem existir na nova vertical
+    window.dispatchEvent(new CustomEvent('constelacao:focus', { detail: null }))
+    window.dispatchEvent(new CustomEvent('constelacao:area', { detail: null }))
     window.dispatchEvent(
       new CustomEvent('constelacao:vertical', { detail: { index: i, key: SHAPES[i].key } })
     )
   }
 
-  // pessoas visíveis na vertical ativa (sem campo "vertical" = atua em todas)
-  const inVertical = (n) => !n.verticals || n.verticals.includes(SHAPES[vertical].key)
+  // pessoas visíveis na vertical ativa (Suprema = todas; sem campo = todas)
+  const inVertical = (n) =>
+    SHAPES[vertical].all || !n.verticals || n.verticals.includes(SHAPES[vertical].key)
   const totalVertical = org.list.filter((n) => !n.vacant && inVertical(n)).length
+
+  // áreas com gente na vertical ativa — legenda, painel, tour e stats usam isto
+  const visibleDepts = useMemo(
+    () =>
+      org.departments
+        .map((d) => ({ ...d, members: d.members.filter(inVertical) }))
+        .filter((d) => d.members.length > 0),
+    [org, vertical]
+  )
 
   useEffect(() => {
     const onTier = (e) => setPerfTier(e.detail?.tier ?? null)
@@ -97,7 +127,7 @@ export default function UI() {
   const tourRef = useRef(false)
   tourRef.current = tour
 
-  const area = areaKey ? org.departments.find((d) => d.key === areaKey) : null
+  const area = areaKey ? visibleDepts.find((d) => d.key === areaKey) : null
 
   // isolamento visual acompanha o painel de área aberto
   useEffect(() => {
@@ -132,15 +162,28 @@ export default function UI() {
     }
   }, [])
 
-  // ---- modo apresentação: voa de área em área a cada 8s ------------------------
+  // ---- modo apresentação: voa de área em área (só as da vertical ativa),
+  //      alterna a pessoa em destaque a cada volta e respira com uma visão
+  //      geral da constelação antes de recomeçar --------------------------------
   useEffect(() => {
-    if (!tour) return
+    if (!tour || !visibleDepts.length) return
     let i = 0
+    let lap = 0
     const step = () => {
-      const dept = org.departments[i % org.departments.length]
-      const head = [...dept.members].sort((a, b) => a.levelIndex - b.levelIndex)[0]
-      window.dispatchEvent(new CustomEvent('constelacao:area', { detail: { dept: dept.key } }))
-      if (head) window.dispatchEvent(new CustomEvent('constelacao:focus', { detail: { node: head } }))
+      const idx = i % (visibleDepts.length + 1)
+      if (idx === visibleDepts.length) {
+        // respiro: recua e mostra a constelação inteira
+        window.dispatchEvent(new CustomEvent('constelacao:focus', { detail: null }))
+        window.dispatchEvent(new CustomEvent('constelacao:area', { detail: null }))
+        lap++
+      } else {
+        const dept = visibleDepts[idx]
+        const members = [...dept.members].sort((a, b) => a.levelIndex - b.levelIndex)
+        // 1ª volta destaca o líder; voltas seguintes percorrem o time
+        const person = members[lap % members.length]
+        window.dispatchEvent(new CustomEvent('constelacao:area', { detail: { dept: dept.key } }))
+        if (person) window.dispatchEvent(new CustomEvent('constelacao:focus', { detail: { node: person } }))
+      }
       i++
     }
     step()
@@ -150,7 +193,7 @@ export default function UI() {
       window.dispatchEvent(new CustomEvent('constelacao:focus', { detail: null }))
       window.dispatchEvent(new CustomEvent('constelacao:area', { detail: null }))
     }
-  }, [tour, org])
+  }, [tour, visibleDepts])
 
   // ---- busca -----------------------------------------------------------------
   const results = useMemo(() => {
@@ -159,12 +202,13 @@ export default function UI() {
     return org.list
       .filter(
         (n) =>
-          normalize(n.name).includes(q) ||
-          normalize(n.role).includes(q) ||
-          normalize(n.department).includes(q)
+          inVertical(n) &&
+          (normalize(n.name).includes(q) ||
+            normalize(n.role).includes(q) ||
+            normalize(n.department).includes(q))
       )
       .slice(0, 6)
-  }, [query])
+  }, [query, vertical])
 
   const focusNode = (node) => {
     setQuery('')
@@ -306,6 +350,14 @@ export default function UI() {
         </div>
 
         <div className="ui-top-right ui-fade">
+          <a
+            className="ui-round ui-os"
+            href="https://prod-sup.github.io/painelpoker/hub.html"
+            title="Voltar pro Suprema OS"
+            aria-label="Voltar pro Suprema OS"
+          >
+            ♠
+          </a>
           <button
             type="button"
             className={`ui-round ui-perf is-${perfMode}`}
@@ -381,7 +433,9 @@ export default function UI() {
 
       <div className="ui-left ui-fade">
         <span className="ui-kicker">
-          {SHAPES[vertical].symbol} SUPREMA {SHAPES[vertical].key.toUpperCase()}
+          {SHAPES[vertical].all
+            ? '♠ ♦ ♣ SUPREMA GAMING'
+            : `${SHAPES[vertical].symbol} SUPREMA ${SHAPES[vertical].key.toUpperCase()}`}
         </span>
         <h1 className="ui-title">
           A <br />
@@ -401,7 +455,7 @@ export default function UI() {
       </div>
 
       <ul className="ui-legend ui-fade">
-        {org.departments.map((d) => (
+        {visibleDepts.map((d) => (
           <li key={d.key}>
             <button
               type="button"
@@ -426,10 +480,11 @@ export default function UI() {
         ))}
       </ul>
 
-      {/* minimapa ♠ — todas as estrelas; a focada/hover pulsa */}
+      {/* minimapa ♠ — estrelas da vertical ativa; a focada/hover pulsa;
+          o anel dourado mostra onde a câmera está olhando (e quão perto) */}
       <div className="ui-minimap ui-fade" aria-hidden="true">
         <svg viewBox="0 0 120 132">
-          {org.list.map((n) => {
+          {org.list.filter(inVertical).map((n) => {
             const active = card?.id === n.id
             return (
               <circle
@@ -443,6 +498,15 @@ export default function UI() {
               />
             )
           })}
+          {cam && (
+            <g
+              className="mini-cam"
+              transform={`translate(${Math.min(112, Math.max(8, mapX(cam.x)))} ${Math.min(124, Math.max(8, mapY(cam.y)))})`}
+            >
+              <circle className="mini-cam-ring" r={Math.min(46, Math.max(7, (cam.z - 6) * 1.15))} />
+              <circle className="mini-cam-dot" r="1.7" />
+            </g>
+          )}
         </svg>
       </div>
 
@@ -450,7 +514,7 @@ export default function UI() {
         <div className="ui-stats ui-fade">
           <span><strong>{totalVertical}</strong> pessoas</span>
           <span className="ui-sep" />
-          <span><strong>{AREAS}</strong> áreas</span>
+          <span><strong>{visibleDepts.length}</strong> áreas</span>
           <span className="ui-sep" />
           <span><strong>3</strong> verticais</span>
         </div>

@@ -1,8 +1,23 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOrganization } from '../data/organization'
 import { lineVertexShader, lineFragmentShader } from '../shaders/connectionLines'
+
+/** Vertical ativa ('Poker' | 'SX' | 'Bet' | 'Suprema' — a visão de grupo). */
+export function useActiveVertical() {
+  const [vertical, setVertical] = useState('Poker')
+  useEffect(() => {
+    const onVertical = (e) => setVertical(e.detail?.key ?? 'Poker')
+    window.addEventListener('constelacao:vertical', onVertical)
+    return () => window.removeEventListener('constelacao:vertical', onVertical)
+  }, [])
+  return vertical
+}
+
+export function nodeInVertical(node, vertical) {
+  return vertical === 'Suprema' || !node.verticals || node.verticals.includes(vertical)
+}
 
 /**
  * Connections — as ~250 relações da empresa como linhas douradas.
@@ -17,9 +32,14 @@ const SEGMENTS = 12
 export default function Connections({ cfg }) {
   const materialRef = useRef()
   const org = useMemo(() => getOrganization(), [])
+  const vertical = useActiveVertical()
 
   const geometry = useMemo(() => {
-    const { links, byId } = org
+    const { byId } = org
+    // só as relações da vertical ativa: nada de linhas do Poker na SX/Bet
+    const links = org.links.filter(
+      (l) => nodeInVertical(byId.get(l.a), vertical) && nodeInVertical(byId.get(l.b), vertical)
+    )
     const vertsPerLink = SEGMENTS * 2 // pares de pontos (line segments)
     const positions = new Float32Array(links.length * vertsPerLink * 3)
     const progress = new Float32Array(links.length * vertsPerLink)
@@ -76,7 +96,9 @@ export default function Connections({ cfg }) {
     geo.setAttribute('aStrength', new THREE.BufferAttribute(strengths, 1))
     geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3))
     return geo
-  }, [org, cfg])
+  }, [org, cfg, vertical])
+
+  useEffect(() => () => geometry.dispose(), [geometry])
 
   const uniforms = useMemo(
     () => ({
