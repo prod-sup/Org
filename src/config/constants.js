@@ -108,6 +108,21 @@ export const CONFIG = {
   },
 
   // ---------------------------------------------------------------------------
+  // ESTRELAS AMBIENTE — estrelas decorativas que preenchem a constelação
+  // quando a vertical tem pouca gente (SX/Bet). Cores das áreas + champanhe;
+  // brilho e twinkle fortes pro bloom fazê-las "explodir".
+  // ---------------------------------------------------------------------------
+  ambientStars: {
+    count: 52,                   // teto; cada pessoa real na vertical desconta 3
+    size: 5.0,
+    opacity: 0.95,
+    twinkleSpeed: 1.5,
+    driftAmplitude: 0.14,
+    driftSpeed: 0.12,
+    colors: ['#ffd27a', '#7fa4ff', '#c39be0', '#8fd6a8', '#7fd6d0', '#ffe9b8', '#f5a05a'],
+  },
+
+  // ---------------------------------------------------------------------------
   // TEIA — malha decorativa fina que preenche o interior do naipe
   // ---------------------------------------------------------------------------
   web: {

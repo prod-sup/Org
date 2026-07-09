@@ -10,6 +10,7 @@ import Atmosphere from './Atmosphere'
 import StarField from './StarField'
 import SpadeDust from './SpadeDust'
 import Organization from './Organization'
+import AmbientStars from './AmbientStars'
 import Connections from './Connections'
 import ConstellationWeb from './ConstellationWeb'
 import Labels from './Labels'
@@ -108,6 +109,7 @@ export default function Scene() {
         <group position={[3.2, 0, 0]}>
           <SpadeDust outline={cfg.spadeOutline} fill={cfg.spadeFill} />
           <Organization />
+          <AmbientStars cfg={cfg.ambientStars} />
           <ConstellationWeb cfg={cfg.web} />
           <Connections cfg={cfg.connections} />
           <ParticleFlow cfg={cfg.flow} />
