@@ -36,9 +36,7 @@ export default function Organization() {
       if (!e.detail) dimDeptRef.current = null
     }
     const onVertical = (e) => {
-      // 'Suprema' é a visão de grupo: sem filtro, todo mundo aceso
-      dimVerticalRef.current =
-        e.detail?.key && e.detail.key !== 'Suprema' ? e.detail.key : null
+      dimVerticalRef.current = e.detail?.key ?? 'Poker'
     }
     window.addEventListener('constelacao:dim', onDim)
     window.addEventListener('constelacao:vertical', onVertical)

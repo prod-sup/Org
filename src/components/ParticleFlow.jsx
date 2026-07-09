@@ -53,8 +53,7 @@ export default function ParticleFlow({ cfg }) {
     }
 
     // com poucos links, a maior parte do fluxo vira faísca de contorno
-    const linkShare =
-      vertical === 'Suprema' ? 0.6 : links.length >= 12 ? 1 : links.length > 0 ? 0.45 : 0
+    const linkShare = links.length >= 12 ? 1 : links.length > 0 ? 0.45 : 0
 
     for (let i = 0; i < n; i++) {
       if (links.length && Math.random() < linkShare) {

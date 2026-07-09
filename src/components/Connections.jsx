@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { getOrganization } from '../data/organization'
 import { lineVertexShader, lineFragmentShader } from '../shaders/connectionLines'
 
-/** Vertical ativa ('Poker' | 'SX' | 'Bet' | 'Suprema' — a visão de grupo). */
+/** Vertical ativa ('Poker' | 'SX' | 'Bet'). */
 export function useActiveVertical() {
   const [vertical, setVertical] = useState('Poker')
   useEffect(() => {
@@ -16,7 +16,7 @@ export function useActiveVertical() {
 }
 
 export function nodeInVertical(node, vertical) {
-  return vertical === 'Suprema' || !node.verticals || node.verticals.includes(vertical)
+  return !node.verticals || node.verticals.includes(vertical)
 }
 
 /**

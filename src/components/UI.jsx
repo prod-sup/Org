@@ -105,9 +105,8 @@ export default function UI() {
     )
   }
 
-  // pessoas visíveis na vertical ativa (Suprema = todas; sem campo = todas)
-  const inVertical = (n) =>
-    SHAPES[vertical].all || !n.verticals || n.verticals.includes(SHAPES[vertical].key)
+  // pessoas visíveis na vertical ativa (sem campo "vertical" = atua em todas)
+  const inVertical = (n) => !n.verticals || n.verticals.includes(SHAPES[vertical].key)
   const totalVertical = org.list.filter((n) => !n.vacant && inVertical(n)).length
 
   // áreas com gente na vertical ativa — legenda, painel, tour e stats usam isto
@@ -433,9 +432,7 @@ export default function UI() {
 
       <div className="ui-left ui-fade">
         <span className="ui-kicker">
-          {SHAPES[vertical].all
-            ? '♠ ♦ ♣ SUPREMA GAMING'
-            : `${SHAPES[vertical].symbol} SUPREMA ${SHAPES[vertical].key.toUpperCase()}`}
+          {SHAPES[vertical].symbol} SUPREMA {SHAPES[vertical].key.toUpperCase()}
         </span>
         <h1 className="ui-title">
           A <br />

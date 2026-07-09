@@ -23,7 +23,6 @@ export const starVertexShader = /* glsl */ `
   attribute vec3  aColor;
   attribute vec3  aPosB;     // posição na forma 1 (♦)
   attribute vec3  aPosC;     // posição na forma 2 (♣)
-  attribute vec3  aPosD;     // posição na forma 3 (S Suprema)
 
   varying vec3  vColor;
   varying float vTwinkle;
@@ -32,8 +31,7 @@ export const starVertexShader = /* glsl */ `
   vec3 shapePos(float s) {
     if (s < 0.5) return position;
     if (s < 1.5) return aPosB;
-    if (s < 2.5) return aPosC;
-    return aPosD;
+    return aPosC;
   }
 
   void main() {

@@ -28,28 +28,21 @@ export default function CameraController({ cfg }) {
   const hoverT = useRef({ v: 0 }) // 0→1 quando uma estrela está em hover
   const focus = useRef(null)      // Vector3 da pessoa focada (mundo) ou null
   const pull = useRef({ v: 0 })   // dolly-out cinematográfico durante o morph
-  const wide = useRef({ v: 0 })   // recuo extra persistente na visão Suprema (S)
   const lastEmit = useRef(0)      // throttle do evento p/ o minimapa
 
   // Troca de constelação: a câmera recua enquanto as partículas voam
-  // (dolly-out → dolly-in), e fica mais aberta na visão de grupo (S)
+  // (dolly-out → dolly-in)
   useEffect(() => {
-    const onVertical = (e) => {
+    const onVertical = () => {
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (!reduced) {
-        gsap.killTweensOf(pull.current)
-        gsap.to(pull.current, {
-          v: 1,
-          duration: 1.1,
-          ease: 'power2.out',
-          onComplete: () =>
-            gsap.to(pull.current, { v: 0, duration: 1.6, ease: 'power2.inOut' }),
-        })
-      }
-      gsap.to(wide.current, {
-        v: e.detail?.key === 'Suprema' ? 1 : 0,
-        duration: reduced ? 0 : 2.2,
-        ease: 'power2.inOut',
+      if (reduced) return
+      gsap.killTweensOf(pull.current)
+      gsap.to(pull.current, {
+        v: 1,
+        duration: 1.1,
+        ease: 'power2.out',
+        onComplete: () =>
+          gsap.to(pull.current, { v: 0, duration: 1.6, ease: 'power2.inOut' }),
       })
     }
     window.addEventListener('constelacao:vertical', onVertical)
@@ -155,7 +148,7 @@ export default function CameraController({ cfg }) {
         cfg.base[0] + pointer.x * strength,
         cfg.base[1] + pointer.y * strength + Math.sin(t * cfg.floatSpeed) * floatAmp,
         fitZ - zoom.current - hoverT.current.v * 1.6 +
-          pull.current.v * 6 + wide.current.v * 4 +
+          pull.current.v * 6 +
           Math.cos(t * cfg.floatSpeed * 0.7) * floatAmp * 0.5
       )
       lookTarget.current.set(0, 0, 0)

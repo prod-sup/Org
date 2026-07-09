@@ -96,71 +96,6 @@ function clubOutline(n, rand = Math.random) {
   return pts
 }
 
-// ---- S do logo Suprema — dois "raios" triangulares em simetria de ponto -----
-// A metade superior é um polígono traçado do logo; a inferior é a mesma
-// rotacionada 180° em torno do centro. Juntas desenham o S da marca.
-const S_CENTER_Y = -0.19 // alinha o S ao centro visual dos naipes
-const S_SCALE = 1.02
-
-// metade superior em coordenadas do logo (y pra cima), sentido horário
-const S_TOP = [
-  [-0.97, -0.15], // ponta inferior-esquerda
-  [-0.27, 0.92],  // ápice
-  [0.43, 0.28],   // ombro direito
-  [1.01, 0.14],   // ponta da barra do meio
-  [0.25, 0.02],   // retorno da barra
-  [-0.14, 0.49],  // vértice do recorte interno
-  [-0.44, 0.02],  // base do recorte
-].map(([x, y]) => [x * S_SCALE, y * S_SCALE + S_CENTER_Y])
-
-const S_BOTTOM = S_TOP.map(([x, y]) => [-x, 2 * S_CENTER_Y - y])
-
-function pointInPoly(poly, x, y) {
-  let inside = false
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const [xi, yi] = poly[i]
-    const [xj, yj] = poly[j]
-    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
-      inside = !inside
-    }
-  }
-  return inside
-}
-
-function supremaInside(x, y) {
-  return pointInPoly(S_TOP, x, y) || pointInPoly(S_BOTTOM, x, y)
-}
-
-// contorno: caminha pelos perímetros dos dois polígonos, denso por comprimento
-function polyPerimeterPoints(poly, n, rand) {
-  const edges = []
-  let total = 0
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i]
-    const b = poly[(i + 1) % poly.length]
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1])
-    edges.push({ a, b, len })
-    total += len
-  }
-  const pts = []
-  for (const e of edges) {
-    const k = Math.max(1, Math.round((e.len / total) * n))
-    for (let i = 0; i < k; i++) {
-      const t = (i + rand() * 0.9) / k
-      pts.push({ x: e.a[0] + (e.b[0] - e.a[0]) * t, y: e.a[1] + (e.b[1] - e.a[1]) * t })
-    }
-  }
-  return pts
-}
-
-function supremaOutline(n, rand = Math.random) {
-  const half = Math.floor(n / 2)
-  return [
-    ...polyPerimeterPoints(S_TOP, half, rand),
-    ...polyPerimeterPoints(S_BOTTOM, n - half, rand),
-  ]
-}
-
 // ---- amostragem interna genérica por rejeição --------------------------------
 function insideSampler(test) {
   return (n, rand = Math.random) => {
@@ -189,6 +124,4 @@ export const SHAPES = [
   { key: 'Poker', symbol: '♠', sampleOutline: spadeOutline, sampleInside: spadeInside },
   { key: 'SX', symbol: '♦', sampleOutline: outlineFromParam(diamondPoint), sampleInside: insideSampler(diamondInside) },
   { key: 'Bet', symbol: '♣', sampleOutline: clubOutline, sampleInside: insideSampler(clubInside) },
-  // visão de grupo: ♠♦♣ juntos formam o S da Suprema; `all` = mostra todo mundo
-  { key: 'Suprema', symbol: 'S', all: true, sampleOutline: supremaOutline, sampleInside: insideSampler(supremaInside) },
 ]
