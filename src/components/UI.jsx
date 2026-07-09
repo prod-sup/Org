@@ -531,6 +531,33 @@ export default function UI() {
           </span>
           <strong className="person-name">{card.name}</strong>
           <span className="person-role">{card.role}</span>
+          {card.email && (
+            <span className="person-contact">
+              {focused ? (
+                <>
+                  <a href={`mailto:${card.email}`} title="Enviar e-mail">
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                    {card.email}
+                  </a>
+                  <a href={card.teams} target="_blank" rel="noopener noreferrer" title="Abrir chat no Microsoft Teams">
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></svg>
+                    Chamar no Teams
+                  </a>
+                </>
+              ) : (
+                <>
+                  <span>
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                    {card.email}
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></svg>
+                    Teams · clique na estrela p/ chamar
+                  </span>
+                </>
+              )}
+            </span>
+          )}
           {focused && <span className="person-vacant">ESC para voltar à constelação</span>}
         </div>
       )}

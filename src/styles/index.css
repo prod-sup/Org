@@ -520,6 +520,34 @@ body {
   color: var(--muted);
 }
 
+/* contato corporativo — e-mail + Teams no hover; links clicáveis quando fixado */
+.person-contact {
+  display: grid;
+  gap: 5px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(242, 237, 226, 0.1);
+}
+
+.person-contact a,
+.person-contact > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.person-contact svg { flex: none; color: var(--gold); opacity: 0.8; }
+
+.person-contact a {
+  transition: color 0.25s ease;
+}
+
+.person-contact a:hover { color: var(--gold-bright); }
+
 .person-vacant {
   font-size: 9px;
   letter-spacing: 0.24em;

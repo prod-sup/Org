@@ -52,61 +52,64 @@ export const DEPARTMENTS = [
 // lead: índice (dentro do dept) do gestor direto. null = reporta ao Executivo.
 const PEOPLE = [
   // Executivo — os três CEOs no ápice do naipe
-  { dept: 'Executivo', name: 'Vasco Tavares',    role: 'CEO', level: 'CEO' },
-  { dept: 'Executivo', name: 'Rafael Silva',     nick: 'Rafa', role: 'CEO', level: 'CEO' },
-  { dept: 'Executivo', name: 'Eber Coutinho',    role: 'CEO', level: 'CEO' },
+  { dept: 'Executivo', name: 'Vasco Tavares',    role: 'CEO', level: 'CEO', vertical: ['Poker'] },
+  { dept: 'Executivo', name: 'Rafael Silva',     nick: 'Rafa', role: 'CEO', level: 'CEO', vertical: ['Poker'] },
+  { dept: 'Executivo', name: 'Eber Coutinho',    role: 'CEO', level: 'CEO', vertical: ['Poker'] },
+  // Suprema SX — liderança própria da vertical ♦
+  { dept: 'Executivo', name: 'Laza',             role: 'CEO SX', level: 'CEO', vertical: ['SX'] },
+  { dept: 'Executivo', name: 'Fábio Makoto',     role: 'Diretor SX', level: 'Diretor', lead: 3, vertical: ['SX'] },
 
   // Produtos
-  { dept: 'Produtos', name: 'Bruno Larotonda',  nick: 'Lala', role: 'Coordenador de Produtos', level: 'Coordenador' },
-  { dept: 'Produtos', name: 'Felipe Augusto',   role: 'Analista de Produtos',   level: 'Analista',   lead: 0 },
-  { dept: 'Produtos', name: 'Brian Laureano',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
-  { dept: 'Produtos', name: 'Kelly Souza',      role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
-  { dept: 'Produtos', name: 'Matheus Menassi',  role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
-  { dept: 'Produtos', name: 'Isabela Uguetto',  role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
-  { dept: 'Produtos', name: 'Thalia Candido',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
-  { dept: 'Produtos', name: 'Gabriele Risquini',role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
-  { dept: 'Produtos', name: 'Lidia Ferreira',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
-  { dept: 'Produtos', name: 'Vitoria Polisel',  role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
-  { dept: 'Produtos', name: 'Thainã Martins',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
-  { dept: 'Produtos', name: 'Gabriel Carlos',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0 },
+  { dept: 'Produtos', name: 'Bruno Larotonda',  nick: 'Lala', role: 'Coordenador de Produtos', level: 'Coordenador', vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Felipe Augusto',   role: 'Analista de Produtos',   level: 'Analista',   lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Brian Laureano',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Kelly Souza',      role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Matheus Menassi',  role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Isabela Uguetto',  role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Thalia Candido',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Gabriele Risquini',role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Lidia Ferreira',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Vitoria Polisel',  role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Thainã Martins',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
+  { dept: 'Produtos', name: 'Gabriel Carlos',   role: 'Assistente de Produtos', level: 'Assistente', lead: 0, vertical: ['Poker'] },
 
   // Security
-  { dept: 'Security', name: 'Frederyk Matos',   nick: 'Fred', role: 'Coordenador de Security', level: 'Coordenador' },
-  { dept: 'Security', name: 'Douglas Ferreira', role: 'Analista de Dados Security', level: 'Analista', lead: 0 },
-  { dept: 'Security', name: 'Jose Wolff',       role: 'Analista de Security', level: 'Analista', lead: 0 },
-  { dept: 'Security', name: 'Bruno Padilha',    nick: 'Zang', role: 'Analista de Security', level: 'Analista', lead: 0 },
-  { dept: 'Security', name: 'Harles Henrique',  role: 'Analista de Security', level: 'Analista', lead: 0 },
+  { dept: 'Security', name: 'Frederyk Matos',   nick: 'Fred', role: 'Coordenador de Security', level: 'Coordenador', vertical: ['Poker'] },
+  { dept: 'Security', name: 'Douglas Ferreira', role: 'Analista de Dados Security', level: 'Analista', lead: 0, vertical: ['Poker'] },
+  { dept: 'Security', name: 'Jose Wolff',       role: 'Analista de Security', level: 'Analista', lead: 0, vertical: ['Poker'] },
+  { dept: 'Security', name: 'Bruno Padilha',    nick: 'Zang', role: 'Analista de Security', level: 'Analista', lead: 0, vertical: ['Poker'] },
+  { dept: 'Security', name: 'Harles Henrique',  role: 'Analista de Security', level: 'Analista', lead: 0, vertical: ['Poker'] },
 
   // Comercial
-  { dept: 'Comercial', name: 'Marcelo Ascenção', role: 'Coordenador Comercial', level: 'Coordenador' },
-  { dept: 'Comercial', name: 'Wellington Alves', role: 'Analista de Dados Comercial', level: 'Analista', lead: 0 },
-  { dept: 'Comercial', name: 'Karen Lopes',      role: 'Analista Comercial', level: 'Analista', lead: 0 },
-  { dept: 'Comercial', name: 'Talles Lima',      role: 'Assistente Comercial', level: 'Assistente', lead: 0 },
+  { dept: 'Comercial', name: 'Marcelo Ascenção', role: 'Coordenador Comercial', level: 'Coordenador', vertical: ['Poker'] },
+  { dept: 'Comercial', name: 'Wellington Alves', role: 'Analista de Dados Comercial', level: 'Analista', lead: 0, vertical: ['Poker'] },
+  { dept: 'Comercial', name: 'Karen Lopes',      role: 'Analista Comercial', level: 'Analista', lead: 0, vertical: ['Poker'] },
+  { dept: 'Comercial', name: 'Talles Lima',      role: 'Assistente Comercial', level: 'Assistente', lead: 0, vertical: ['Poker'] },
 
   // Marketing
-  { dept: 'Marketing', name: 'Julia Gonçalves',  role: 'Diretora de Criação', level: 'Diretor' },
-  { dept: 'Marketing', name: 'Rafaella Correa',  role: 'Coordenadora de Marketing', level: 'Coordenador', lead: 0 },
-  { dept: 'Marketing', name: 'Debora Bresqui',   role: 'Analista de Marketing', level: 'Analista', lead: 1 },
-  { dept: 'Marketing', name: 'Cristian Brisola', role: 'Designer Gráfico', level: 'Analista', lead: 1 },
-  { dept: 'Marketing', name: 'Gustavo Gebaili',  role: 'Designer Pleno', level: 'Analista', lead: 1 },
-  { dept: 'Marketing', name: 'Caroline Manfré',  role: 'Redatora', level: 'Analista', lead: 1 },
-  { dept: 'Marketing', name: 'Rayssa Riordana',  role: 'Social Media', level: 'Analista', lead: 1 },
+  { dept: 'Marketing', name: 'Julia Gonçalves',  role: 'Diretora de Criação', level: 'Diretor', vertical: ['Poker'] },
+  { dept: 'Marketing', name: 'Rafaella Correa',  role: 'Coordenadora de Marketing', level: 'Coordenador', lead: 0, vertical: ['Poker'] },
+  { dept: 'Marketing', name: 'Debora Bresqui',   role: 'Analista de Marketing', level: 'Analista', lead: 1, vertical: ['Poker'] },
+  { dept: 'Marketing', name: 'Cristian Brisola', role: 'Designer Gráfico', level: 'Analista', lead: 1, vertical: ['Poker'] },
+  { dept: 'Marketing', name: 'Gustavo Gebaili',  role: 'Designer Pleno', level: 'Analista', lead: 1, vertical: ['Poker'] },
+  { dept: 'Marketing', name: 'Caroline Manfré',  role: 'Redatora', level: 'Analista', lead: 1, vertical: ['Poker'] },
+  { dept: 'Marketing', name: 'Rayssa Riordana',  role: 'Social Media', level: 'Analista', lead: 1, vertical: ['Poker'] },
 
   // RH
-  { dept: 'RH', name: 'Marcus Alves',     role: 'Coordenador de RH', level: 'Coordenador' },
-  { dept: 'RH', name: 'Daniela Siqueira', role: 'Analista de RH', level: 'Analista', lead: 0 },
-  { dept: 'RH', name: 'Karina Teodoro',   role: 'Assistente de RH', level: 'Assistente', lead: 0 },
+  { dept: 'RH', name: 'Marcus Alves',     role: 'Coordenador de RH', level: 'Coordenador', vertical: ['Poker'] },
+  { dept: 'RH', name: 'Daniela Siqueira', role: 'Analista de RH', level: 'Analista', lead: 0, vertical: ['Poker'] },
+  { dept: 'RH', name: 'Karina Teodoro',   role: 'Assistente de RH', level: 'Assistente', lead: 0, vertical: ['Poker'] },
 
   // Atendimento
-  { dept: 'Atendimento', name: 'Roberto Proença',  role: 'Coordenador de Atendimento', level: 'Coordenador' },
-  { dept: 'Atendimento', name: 'Lindsey Nomina',   role: 'Líder de Atendimento', level: 'Analista', lead: 0 },
-  { dept: 'Atendimento', name: 'Felipe Bernardes', role: 'Líder de Atendimento', level: 'Analista', lead: 0 },
-  { dept: 'Atendimento', name: 'Maria Clara',      role: 'Assistente de Atendimento', level: 'Assistente', lead: 1 },
-  { dept: 'Atendimento', name: 'Julia Lais',       role: 'Assistente de Atendimento', level: 'Assistente', lead: 2 },
+  { dept: 'Atendimento', name: 'Roberto Proença',  role: 'Coordenador de Atendimento', level: 'Coordenador', vertical: ['Poker'] },
+  { dept: 'Atendimento', name: 'Lindsey Nomina',   role: 'Líder de Atendimento', level: 'Analista', lead: 0, vertical: ['Poker'] },
+  { dept: 'Atendimento', name: 'Felipe Bernardes', role: 'Líder de Atendimento', level: 'Analista', lead: 0, vertical: ['Poker'] },
+  { dept: 'Atendimento', name: 'Maria Clara',      role: 'Assistente de Atendimento', level: 'Assistente', lead: 1, vertical: ['Poker'] },
+  { dept: 'Atendimento', name: 'Julia Lais',       role: 'Assistente de Atendimento', level: 'Assistente', lead: 2, vertical: ['Poker'] },
 
   // Compliance
-  { dept: 'Compliance', name: 'Bruna Roque',    role: 'Coordenadora de Compliance', level: 'Coordenador' },
-  { dept: 'Compliance', name: 'Camila Ladeira', role: 'Analista de Compliance', level: 'Analista', lead: 0 },
+  { dept: 'Compliance', name: 'Bruna Roque',    role: 'Coordenadora de Compliance', level: 'Coordenador', vertical: ['Poker'] },
+  { dept: 'Compliance', name: 'Camila Ladeira', role: 'Analista de Compliance', level: 'Analista', lead: 0, vertical: ['Poker'] },
 ]
 
 // ---- Layout: aglomerado por departamento ------------------------------------
@@ -122,8 +125,29 @@ function clampInside(x, y, ax, ay) {
   return [ax, ay]
 }
 
+// e-mail corporativo: usa o campo "email" da pessoa; sem ele, gera
+// primeiro.ultimo@dominio (dominio_email do equipe.json)
+function emailFor(p, domain) {
+  if (p.email) return p.email
+  const parts = p.name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+  const user = parts.length > 1 ? `${parts[0]}.${parts[parts.length - 1]}` : parts[0]
+  return `${user}@${domain}`
+}
+
+// duas pessoas dividem alguma vertical? (sem campo = atua em todas)
+function sharesVertical(a, b) {
+  if (!a.verticals || !b.verticals) return true
+  return a.verticals.some((v) => b.verticals.includes(v))
+}
+
 function build(src) {
   const rand = mulberry32(20260706)
+  const emailDomain = src.dominio_email || 'gruposuprema.com'
   const departments = src.departments
   const deptByKey = new Map(departments.map((d) => [d.key, d]))
 
@@ -146,11 +170,12 @@ function build(src) {
     sorted.sort((a, b) => LI[a.p.level] - LI[b.p.level] || a.i - b.i)
 
     if (deptKey === 'Executivo') {
-      // os 3 CEOs em triângulo no ápice
-      const slots = [[0, 0.10], [-0.11, -0.07], [0.11, -0.07]]
+      // CEOs Poker em triângulo no ápice; liderança SX logo abaixo
+      const slots = [[0, 0.10], [-0.11, -0.07], [0.11, -0.07], [-0.05, 0.22], [0.09, 0.22], [0, -0.20]]
       sorted.forEach(({ p, i }, k) => {
         const [dx, dy] = slots[k % slots.length]
-        placeNode(p, i, ax + dx, ay + dy, 0.15)
+        const [x, y] = clampInside(ax + dx, ay + dy, ax, ay)
+        placeNode(p, i, x, y, 0.15)
       })
     } else {
       sorted.forEach(({ p, i }, k) => {
@@ -182,6 +207,8 @@ function build(src) {
         photo: p.photo || null,
         // verticais em que atua (Poker/SX/Bet); null = todas
         verticals: Array.isArray(p.vertical) && p.vertical.length ? p.vertical : null,
+        email: emailFor(p, emailDomain),
+        teams: p.teams || `https://teams.microsoft.com/l/chat/0/0?users=${emailFor(p, emailDomain)}`,
         managerId: -1,
         _lead: p.lead,
         _localIndex: localIndex,
@@ -204,11 +231,12 @@ function build(src) {
     if (node._lead !== undefined && node._lead !== null) {
       node.managerId = idOf.get(`${node.department}:${node._lead}`) ?? vascoId
     } else {
-      // líderes de área reportam ao CEO mais próximo
+      // líderes de área reportam ao CEO mais próximo DA MESMA vertical
       let best = vascoId
       let bestD = Infinity
       for (const cid of ceoIds) {
         const c = byId.get(cid)
+        if (!sharesVertical(c, node)) continue
         const d = (c.pos[0] - node.pos[0]) ** 2 + (c.pos[1] - node.pos[1]) ** 2
         if (d < bestD) { bestD = d; best = cid }
       }
@@ -229,6 +257,7 @@ function build(src) {
   // os CEOs entre si (conselho) — tipo próprio, mais luminoso
   for (let i = 0; i < ceoIds.length; i++) {
     for (let j = i + 1; j < ceoIds.length; j++) {
+      if (!sharesVertical(byId.get(ceoIds[i]), byId.get(ceoIds[j]))) continue
       links.push({ a: ceoIds[i], b: ceoIds[j], type: 'council' })
     }
   }
@@ -239,6 +268,7 @@ function build(src) {
     for (let i = 0; i < heads.length; i++) {
       for (let j = i + 1; j < heads.length; j++) {
         if (heads[i].department === heads[j].department) continue
+        if (!sharesVertical(heads[i], heads[j])) continue
         const d =
           (heads[i].pos[0] - heads[j].pos[0]) ** 2 +
           (heads[i].pos[1] - heads[j].pos[1]) ** 2

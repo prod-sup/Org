@@ -152,8 +152,7 @@ export default function Organization() {
       const foraDaVertical =
         dimVerticalRef.current &&
         node.verticals &&
-        !node.verticals.includes(dimVerticalRef.current) &&
-        node.department !== 'Executivo'
+        !node.verticals.includes(dimVerticalRef.current)
       const dimTarget = foraDaArea || foraDaVertical ? 0.1 : 1
       inst.dim[i] += (dimTarget - inst.dim[i]) * dimEase
       const f = inst.dim[i]
