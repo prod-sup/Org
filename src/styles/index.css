@@ -9,6 +9,67 @@
   --faint: rgba(242, 237, 226, 0.32);
 }
 
+/* -- mundos por vertical: a UI muda de pele junto com a cena ---------------
+   ♠ meia-noite dourada (padrão) · ♦ rubi · ♣ esmeralda */
+:root[data-vertical='SX'] {
+  --gold: #5d8bff;
+  --gold-bright: #a3c0ff;
+}
+
+:root[data-vertical='Bet'] {
+  --gold: #3ee08b;
+  --gold-bright: #a4ffd0;
+}
+
+/* os acentos deslizam entre paletas em vez de piscar */
+.ui-kicker,
+.ui-cta,
+.v-badges i,
+.ui-story-arrow,
+a.ui-os,
+.person-contact svg,
+.cursor-dot {
+  transition: color 1.2s ease, background 1.2s ease, box-shadow 1.2s ease;
+}
+
+[data-vertical='SX'] .ui-title em {
+  background: linear-gradient(100deg, #c2d4ff 0%, #5d8bff 55%, #3556b2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+[data-vertical='Bet'] .ui-title em {
+  background: linear-gradient(100deg, #c8ffe2 0%, #3ee08b 55%, #1f8a52 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+[data-vertical='SX'] .ui-nav button.is-active,
+[data-vertical='SX'] .ui-perf.is-high,
+[data-vertical='SX'] .ui-tour.is-on {
+  color: #071230;
+  background: linear-gradient(120deg, #b3c8ff, #5d8bff);
+}
+
+[data-vertical='Bet'] .ui-nav button.is-active,
+[data-vertical='Bet'] .ui-perf.is-high,
+[data-vertical='Bet'] .ui-tour.is-on {
+  color: #032a16;
+  background: linear-gradient(120deg, #a4ffd0, #35bd76);
+}
+
+/* o texto editorial de cada mundo entra em cascata */
+.ui-lede-line {
+  display: inline-block;
+  opacity: 0;
+  animation: ledeIn 0.9s ease forwards;
+}
+
+@keyframes ledeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -205,6 +266,26 @@ a.ui-os {
   color: var(--gold);
 }
 
+.ui-cta-star {
+  font-style: normal;
+  margin-right: 4px;
+  color: var(--gold-bright);
+  filter: drop-shadow(0 0 6px rgba(255, 217, 143, 0.6));
+}
+
+/* ícone da busca numa "moeda" dourada, como no mock */
+.ui-search-ico {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--gold);
+  color: #0a0a0c;
+  transition: background 1.2s ease;
+}
+
 .ui-scroll {
   margin-top: 26px;
   display: flex;
@@ -250,7 +331,9 @@ a.ui-os {
   overflow: hidden;
   list-style: none;
   display: grid;
-  gap: 10px;
+  gap: 11px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(242, 237, 226, 0.14);
 }
 
 .ui-legend { pointer-events: auto; }
@@ -305,9 +388,9 @@ a.ui-os {
 
 .ui-stats strong {
   font-weight: 500;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--text);
-  margin-right: 6px;
+  margin-left: 8px;
 }
 
 .ui-sep {
@@ -866,6 +949,29 @@ a.ui-os {
 }
 
 .ui-minimap svg { display: block; width: 100%; height: auto; }
+
+/* cantos "de mira" no cartão do minimapa (referência do mock) */
+.ui-minimap::before,
+.ui-minimap::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: color-mix(in srgb, var(--gold) 70%, transparent);
+  border-style: solid;
+}
+
+.ui-minimap::before {
+  top: 5px;
+  left: 5px;
+  border-width: 1px 0 0 1px;
+}
+
+.ui-minimap::after {
+  bottom: 5px;
+  right: 5px;
+  border-width: 0 1px 1px 0;
+}
 
 /* indicador de câmera: anel = campo de visão, ponto = centro do olhar */
 .mini-cam { pointer-events: none; }

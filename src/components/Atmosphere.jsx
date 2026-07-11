@@ -1,6 +1,8 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import gsap from 'gsap'
+import { themeOf } from '../config/themeBus'
 import { nebulaVertexShader, nebulaFragmentShader } from '../shaders/nebula'
 
 /**
@@ -21,6 +23,24 @@ export default function Atmosphere({ cfg }) {
     }),
     [cfg]
   )
+
+  // nébula muda de mundo junto com a vertical (azul/ouro → vinho → esmeralda)
+  useEffect(() => {
+    const onVertical = (e) => {
+      const u = materialRef.current?.uniforms
+      if (!u) return
+      const t = themeOf(e.detail).nebula
+      const d = { duration: 2.6, ease: 'power2.inOut', overwrite: 'auto' }
+      const a = new THREE.Color(t.colorA)
+      const b = new THREE.Color(t.colorB)
+      const c = new THREE.Color(t.colorC)
+      gsap.to(u.uColorA.value, { r: a.r, g: a.g, b: a.b, ...d })
+      gsap.to(u.uColorB.value, { r: b.r, g: b.g, b: b.b, ...d })
+      gsap.to(u.uColorC.value, { r: c.r, g: c.g, b: c.b, ...d })
+    }
+    window.addEventListener('constelacao:vertical', onVertical)
+    return () => window.removeEventListener('constelacao:vertical', onVertical)
+  }, [])
 
   useFrame((_, delta) => {
     if (materialRef.current) {

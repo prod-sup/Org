@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import gsap from 'gsap'
 import { getOrganization } from '../data/organization'
+import { THEMES } from '../config/constants'
 import { SHAPES } from '../data/shapes'
 import { toWorld } from '../data/spadeShape'
 import { flowVertexShader, flowFragmentShader } from '../shaders/flowPoints'
@@ -79,6 +81,14 @@ export default function ParticleFlow({ cfg }) {
   }, [org, cfg, vertical])
 
   useEffect(() => () => geometry.dispose(), [geometry])
+
+  // fluxo na cor do tema (dourado ♠ · rubi ♦ · esmeralda ♣)
+  useEffect(() => {
+    const u = materialRef.current?.uniforms?.uColor
+    if (!u) return
+    const c = new THREE.Color(THEMES[vertical]?.flowColor ?? cfg.color)
+    gsap.to(u.value, { r: c.r, g: c.g, b: c.b, duration: 1.8, ease: 'power2.inOut' })
+  }, [vertical, cfg.color])
 
   const uniforms = useMemo(
     () => ({

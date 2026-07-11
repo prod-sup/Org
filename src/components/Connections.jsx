@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOrganization } from '../data/organization'
+import { THEMES } from '../config/constants'
 import { lineVertexShader, lineFragmentShader } from '../shaders/connectionLines'
 
 /** Vertical ativa ('Poker' | 'SX' | 'Bet'). */
@@ -47,8 +48,16 @@ export default function Connections({ cfg }) {
     const strengths = new Float32Array(links.length * vertsPerLink)
     const colors = new Float32Array(links.length * vertsPerLink * 3)
 
+    // linhas ganham o color grade da vertical (a geometria já rebuilda na troca)
+    const [tr, tg, tb] = THEMES[vertical]?.tint ?? [1, 1, 1]
     const typeColors = Object.fromEntries(
-      Object.entries(cfg.types).map(([k, v]) => [k, new THREE.Color(v.color)])
+      Object.entries(cfg.types).map(([k, v]) => {
+        const c = new THREE.Color(v.color)
+        c.r *= tr
+        c.g *= tg
+        c.b *= tb
+        return [k, c]
+      })
     )
 
     const a = new THREE.Vector3()

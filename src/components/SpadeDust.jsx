@@ -6,6 +6,7 @@ import { starVertexShader, starFragmentShader } from '../shaders/starPoints'
 import { SPADE_SHAPE, toWorld } from '../data/spadeShape'
 import { SHAPES } from '../data/shapes'
 import { useTierDrawRange } from '../config/tierBus'
+import { useThemeTint } from '../config/themeBus'
 
 /**
  * SpadeDust — as partículas que DESENHAM a constelação ativa:
@@ -123,9 +124,14 @@ function DustLayer({ cfg, kind }) {
       uShapeFrom: { value: 0 },
       uShapeTo: { value: 0 },
       uMorph: { value: 0 },
+      uBurst: { value: 1.7 }, // explosão generosa no voo entre naipes
+      uTint: { value: new THREE.Vector3(1, 1, 1) },
     }),
     [cfg]
   )
+
+  // color grade da vertical ativa acompanha o morph
+  useThemeTint(materialRef, 2.4)
 
   // troca de vertical → morph GSAP entre a forma atual e a nova
   useEffect(() => {

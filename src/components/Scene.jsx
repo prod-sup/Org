@@ -11,6 +11,11 @@ import StarField from './StarField'
 import SpadeDust from './SpadeDust'
 import Organization from './Organization'
 import AmbientStars from './AmbientStars'
+import ThemeConductor from './ThemeConductor'
+import GroundGlow from './GroundGlow'
+import NebulaClouds from './NebulaClouds'
+import Galaxy from './Galaxy'
+import ShootingStar from './ShootingStar'
 import Connections from './Connections'
 import ConstellationWeb from './ConstellationWeb'
 import Labels from './Labels'
@@ -100,13 +105,20 @@ export default function Scene() {
       <fogExp2 attach="fog" args={[cfg.scene.fogColor, cfg.scene.fogDensity]} />
 
       <ambientLight intensity={0.15} />
-      <pointLight position={[0, 0, 0]} intensity={1.2} distance={80} decay={2} color="#ffdca0" />
+      {/* luz central + color grade da vertical (fundo/névoa/luz) */}
+      <ThemeConductor />
 
       <Suspense fallback={null}>
         {cfg.tier.nebula && <Atmosphere cfg={cfg.nebula} />}
-        <StarField dust={cfg.dust} gold={cfg.gold} />
+        {/* nuvens de cor baratas: rodam em TODOS os degraus — o fundo nunca
+            fica preto/estático, nem em PC fraco */}
+        <NebulaClouds lite={!cfg.tier.fullPost} />
+        <Galaxy cfg={cfg.galaxy} />
+        <ShootingStar />
+        <StarField dust={cfg.dust} gold={cfg.gold} aura={cfg.aura} />
         {/* naipe deslocado à direita — o bloco editorial vive à esquerda */}
         <group position={[3.2, 0, 0]}>
+          <GroundGlow />
           <SpadeDust outline={cfg.spadeOutline} fill={cfg.spadeFill} />
           <Organization />
           <AmbientStars cfg={cfg.ambientStars} />

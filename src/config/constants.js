@@ -4,13 +4,58 @@
  * As etapas seguintes (organograma, conexões...) vão ler daqui também.
  */
 
+// ---------------------------------------------------------------------------
+// TEMAS POR VERTICAL — cada constelação é um MUNDO: color grade próprio em
+// fundo, névoa, nébula, luz, partículas, bloom e UI. A troca de vertical
+// faz a cena inteira "revelar" a nova paleta (GSAP tweena tudo ao vivo).
+//   Poker ♠  Meia-noite dourada (a identidade original)
+//   SX    ♦  Rubi — carmim profundo, quente e afiado
+//   Bet   ♣  Esmeralda — verde feltro vivo, esportivo
+// tint multiplica a cor das partículas do naipe (1,1,1 = neutro).
+// ---------------------------------------------------------------------------
+export const THEMES = {
+  Poker: {
+    accent: '#d8b56d',
+    accentBright: '#ffd98f',
+    background: '#060a1a',
+    light: '#ffdca0',
+    tint: [1, 1, 1],
+    flowColor: '#ffd98f',
+    webColor: '#c9a45e',
+    nebula: { colorA: '#121c4e', colorB: '#3a1a66', colorC: '#54390f' },
+    bloom: 0.52,
+  },
+  SX: {
+    accent: '#5d8bff',
+    accentBright: '#a3c0ff',
+    background: '#050c24',
+    light: '#8fb2ff',
+    tint: [0.6, 0.8, 1.4],
+    flowColor: '#9db9ff',
+    webColor: '#4a6fd4',
+    nebula: { colorA: '#0a1650', colorB: '#142a6e', colorC: '#0a3450' },
+    bloom: 0.6,
+  },
+  Bet: {
+    accent: '#3ee08b',
+    accentBright: '#a4ffd0',
+    background: '#051810',
+    light: '#8affc4',
+    tint: [0.55, 1.2, 0.78],
+    flowColor: '#7dffb8',
+    webColor: '#3f9e6b',
+    nebula: { colorA: '#0a3826', colorB: '#125438', colorC: '#2a5416' },
+    bloom: 0.6,
+  },
+}
+
 export const CONFIG = {
   // ---------------------------------------------------------------------------
   // CENA
   // ---------------------------------------------------------------------------
   scene: {
-    background: '#02030a',        // preto profundo com leve azul
-    fogColor: '#02030a',
+    background: '#060a1a',        // azul-meia-noite (nunca preto chapado)
+    fogColor: '#060a1a',
     fogDensity: 0.014,            // neblina exponencial suave (profundidade)
   },
 
@@ -37,7 +82,7 @@ export const CONFIG = {
   // STARFIELD — poeira cósmica (camada fria, discreta)
   // ---------------------------------------------------------------------------
   dust: {
-    count: 7500,
+    count: 8500,
     innerRadius: 13,             // miolo vazio: o organograma respira no centro
     radius: 60,                  // raio do volume
     flatten: 0.42,               // achatamento no eixo Y (sensação de disco/galáxia)
@@ -55,7 +100,7 @@ export const CONFIG = {
   // STARFIELD — partículas douradas (camada quente, brilhante, com halo)
   // ---------------------------------------------------------------------------
   gold: {
-    count: 1600,
+    count: 1800,
     innerRadius: 15,
     radius: 42,
     flatten: 0.5,
@@ -70,11 +115,56 @@ export const CONFIG = {
   },
 
   // ---------------------------------------------------------------------------
+  // GALÁXIA — a espiral que vive atrás da constelação. Núcleo quente,
+  // braços frios; gira sempre e inclina com o mouse. O uTint do tema
+  // esfria/esquenta a galáxia inteira a cada mundo.
+  // ---------------------------------------------------------------------------
+  galaxy: {
+    count: 14000,
+    radius: 15,
+    branches: 3,
+    spin: 2.4,
+    randomness: 0.14,
+    randomnessPower: 3.0,
+    insideColor: '#ffd08a',
+    outsideColor: '#7d9bff',
+    brightness: 1.15,            // >1 acende os braços no bloom
+    size: 1.15,
+    opacity: 0.8,
+    twinkleSpeed: 0.5,
+    driftAmplitude: 0.1,
+    driftSpeed: 0.05,
+    rotationSpeed: 0.02,
+    tilt: -1.15,   // bem de frente, leve perspectiva
+    roll: 0.3,
+    position: [-13.5, 7, -14], // objeto celeste no canto sup. esquerdo
+  },
+
+  // ---------------------------------------------------------------------------
+  // AURA — poeira colorida que respira na cor do MUNDO ativo (tema).
+  // É ela que tira o fundo do preto chapado: ouro no ♠, azul na ♦, verde no ♣.
+  // ---------------------------------------------------------------------------
+  aura: {
+    count: 2200,
+    innerRadius: 9,
+    radius: 38,
+    flatten: 0.55,
+    coreBias: 0.7,
+    size: 2.1,
+    sizeVariance: 2.6,
+    opacity: 0.5,
+    twinkleSpeed: 1.1,
+    driftAmplitude: 1.6,
+    driftSpeed: 0.14,
+    colors: ['#fff6e6', '#ffe2b0', '#e8ecff', '#ffffff'],
+  },
+
+  // ---------------------------------------------------------------------------
   // NÉBULA / ATMOSFERA (skydome com fbm noise, discreta)
   // ---------------------------------------------------------------------------
   nebula: {
     radius: 200,
-    intensity: 0.44,
+    intensity: 0.62,
     colorA: '#0a1030',           // azul profundo
     colorB: '#2a1246',           // roxo
     colorC: '#3a2a10',           // dourado apagado
@@ -87,9 +177,9 @@ export const CONFIG = {
   spadeOutline: {
     count: 3000,
     spread: 0.030,               // espessura média — varia por trecho (banda)
-    size: 1.6,
-    sizeVariance: 1.8,
-    opacity: 0.8,
+    size: 1.85,
+    sizeVariance: 1.9,
+    opacity: 0.95,
     twinkleSpeed: 0.7,
     driftAmplitude: 0.06,
     driftSpeed: 0.1,
@@ -98,9 +188,9 @@ export const CONFIG = {
   spadeFill: {
     count: 7800,
     spread: 0.02,
-    size: 1.1,
-    sizeVariance: 1.3,
-    opacity: 0.35,
+    size: 1.15,
+    sizeVariance: 1.4,
+    opacity: 0.48,
     twinkleSpeed: 0.55,
     driftAmplitude: 0.1,
     driftSpeed: 0.08,
@@ -113,11 +203,11 @@ export const CONFIG = {
   // brilho e twinkle fortes pro bloom fazê-las "explodir".
   // ---------------------------------------------------------------------------
   ambientStars: {
-    count: 52,                   // teto; cada pessoa real na vertical desconta 3
+    count: 64,                   // estrelas soltas espalhadas pela tela
     size: 5.0,
     opacity: 0.95,
-    twinkleSpeed: 1.5,
-    driftAmplitude: 0.14,
+    twinkleSpeed: 1.7,
+    driftAmplitude: 0.16,
     driftSpeed: 0.12,
     colors: ['#ffd27a', '#7fa4ff', '#c39be0', '#8fd6a8', '#7fd6d0', '#ffe9b8', '#f5a05a'],
   },
@@ -126,11 +216,11 @@ export const CONFIG = {
   // TEIA — malha decorativa fina que preenche o interior do naipe
   // ---------------------------------------------------------------------------
   web: {
-    points: 850,
-    linkDistance: 1.15,          // distância máxima (mundo) para ligar vizinhos
-    maxLinks: 3,
+    points: 1200,
+    linkDistance: 1.25,          // distância máxima (mundo) para ligar vizinhos
+    maxLinks: 4,
     color: '#c9a45e',
-    opacity: 0.12,               // quase subliminar — só "tecido"
+    opacity: 0.2,                // tecido denso e visível (referência do mock)
   },
 
   // ---------------------------------------------------------------------------
@@ -195,9 +285,9 @@ export const CONFIG = {
 // ---------------------------------------------------------------------------
 export const TIERS = [
   { dpr: [1, 2.0], counts: 1.0,  nebula: true,  fullPost: true  }, // T0 máquina forte
-  { dpr: [1, 1.5], counts: 1.0,  nebula: true,  fullPost: true  }, // T1 perda ~invisível
-  { dpr: [1, 1.2], counts: 0.6,  nebula: false, fullPost: false }, // T2 integrada/notebook
-  { dpr: [1, 1.0], counts: 0.35, nebula: false, fullPost: false }, // T3 PC bem fraco
+  { dpr: [1, 1.5], counts: 1.0,  nebula: true,  fullPost: true  }, // T1 só corta resolução
+  { dpr: [1, 1.1], counts: 0.5,  nebula: false, fullPost: false }, // T2 integrada/notebook
+  { dpr: [1, 0.9], counts: 0.25, nebula: false, fullPost: false }, // T3 PC bem fraco
 ]
 
 /**

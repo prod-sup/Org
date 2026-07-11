@@ -4,34 +4,25 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import { starVertexShader, starFragmentShader } from '../shaders/starPoints'
 import { SPADE_SHAPE, toWorld } from '../data/spadeShape'
-import { SHAPES } from '../data/shapes'
-import { getOrganization } from '../data/organization'
-import { useActiveVertical, nodeInVertical } from './Connections'
+import { useActiveVertical } from './Connections'
+import { useThemeTint } from '../config/themeBus'
 
 /**
- * AmbientStars — estrelas decorativas cintilando dentro da constelação ativa.
- * No ♠ as estrelas são as pessoas; na SX e no Bet o time ainda é pequeno,
- * então estas estrelas "anônimas" preenchem a forma com a mesma vida
- * (brilho estourando no bloom + twinkle forte = as estrelas que explodem).
- *
- * Quanto mais gente a vertical tem, menos estrelas decorativas aparecem —
- * quando o time crescer, elas cedem o lugar sozinhas.
+ * AmbientStars — as estrelas que EXPLODEM: a cada troca de constelação elas
+ * partem de um miolo apertado e se espalham pela tela inteira, onde ficam
+ * cintilando. Presentes em TODAS as verticais; nunca se amontoam em borrão.
  */
 export default function AmbientStars({ cfg }) {
   const materialRef = useRef()
-  const org = useMemo(() => getOrganization(), [])
   const vertical = useActiveVertical()
 
   const data = useMemo(() => {
-    const people = org.list.filter((n) => !n.vacant && nodeInVertical(n, vertical)).length
-    const count = Math.max(0, cfg.count - people * 3)
-    if (!count) return null
+    const count = cfg.count
 
-    const shape = SHAPES.find((s) => s.key === vertical) ?? SHAPES[0]
-    const pts = shape.sampleInside(count)
-    // nascimento explosivo: `position` é o ponto DISPERSO (longe, espalhado);
-    // aPosB é o lugar final na constelação. O morph do shader (uMorph 0→1)
-    // faz cada estrela voar pra dentro com o burst de dispersão no meio.
+    // nascimento explosivo PRA FORA: `position` é um miolo apertado no centro
+    // da constelação; aPosB é o destino ESPALHADO pela tela inteira. O morph
+    // do shader (uMorph 0→1) dispara a explosão — e as estrelas FICAM
+    // espalhadas, cintilando pela tela toda (nunca se amontoam num borrão).
     const scattered = new Float32Array(count * 3)
     const finals = new Float32Array(count * 3)
     const scales = new Float32Array(count)
@@ -39,25 +30,25 @@ export default function AmbientStars({ cfg }) {
     const colorArr = new Float32Array(count * 3)
     const palette = cfg.colors.map((c) => new THREE.Color(c))
     const tmp = new THREE.Color()
+    const center = toWorld(0, -0.19, 0) // centro visual do naipe
 
     for (let i = 0; i < count; i++) {
-      const p = pts[i % pts.length]
-      const w = toWorld(p.x, p.y, (Math.random() * 2 - 1) * SPADE_SHAPE.depth)
-      finals[i * 3 + 0] = w.x
-      finals[i * 3 + 1] = w.y
-      finals[i * 3 + 2] = w.z
-      // origem: mesma direção do ponto, mas empurrada pra fora (explosão)
+      // destino: elipsoide largo cobrindo a tela, com leve viés pro centro
       const th = Math.random() * Math.PI * 2
       const ph = Math.acos(2 * Math.random() - 1)
-      const r = 5 + Math.random() * 9
-      scattered[i * 3 + 0] = w.x + Math.sin(ph) * Math.cos(th) * r
-      scattered[i * 3 + 1] = w.y + Math.sin(ph) * Math.sin(th) * r
-      scattered[i * 3 + 2] = w.z + Math.cos(ph) * r * 0.6
+      const rr = Math.pow(Math.random(), 0.6)
+      finals[i * 3 + 0] = center.x + Math.sin(ph) * Math.cos(th) * rr * 14
+      finals[i * 3 + 1] = center.y + Math.sin(ph) * Math.sin(th) * rr * 8.5
+      finals[i * 3 + 2] = center.z + Math.cos(ph) * rr * 4 * SPADE_SHAPE.depth
+      // origem: miolo apertado — daqui elas explodem pra fora
+      scattered[i * 3 + 0] = center.x + (Math.random() * 2 - 1) * 1.2
+      scattered[i * 3 + 1] = center.y + (Math.random() * 2 - 1) * 1.2
+      scattered[i * 3 + 2] = center.z + (Math.random() * 2 - 1) * 0.8
       // poucas estrelas grandes ("heroínas"), muitas pequenas
       scales[i] = 0.7 + Math.pow(Math.random(), 2) * 2.8
       randoms[i] = Math.random()
       // brilho >1 estoura no bloom — é o que faz a estrela "explodir"
-      tmp.copy(palette[(Math.random() * palette.length) | 0]).multiplyScalar(1.8)
+      tmp.copy(palette[(Math.random() * palette.length) | 0]).multiplyScalar(1.4)
       colorArr[i * 3 + 0] = tmp.r
       colorArr[i * 3 + 1] = tmp.g
       colorArr[i * 3 + 2] = tmp.b
@@ -70,7 +61,7 @@ export default function AmbientStars({ cfg }) {
     geo.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 1))
     geo.setAttribute('aColor', new THREE.BufferAttribute(colorArr, 3))
     return geo
-  }, [org, vertical, cfg])
+  }, [vertical, cfg])
 
   useEffect(() => () => data?.dispose(), [data])
 
@@ -86,12 +77,16 @@ export default function AmbientStars({ cfg }) {
       uShapeFrom: { value: 0 },
       uShapeTo: { value: 1 },
       uMorph: { value: 0 },
+      uBurst: { value: 1.4 },
+      uTint: { value: new THREE.Vector3(1, 1, 1) },
     }),
     [cfg]
   )
 
-  // nascimento: as estrelas EXPLODEM pra dentro da constelação — o morph do
-  // shader carrega o burst de dispersão no meio do voo
+  // as estrelas soltas mergulham na paleta da vertical
+  useThemeTint(materialRef, 2.0)
+
+  // a cada troca: explode do miolo pra tela toda (burst do shader no meio)
   useEffect(() => {
     const u = materialRef.current?.uniforms
     if (!u || !data) return
@@ -101,8 +96,8 @@ export default function AmbientStars({ cfg }) {
     u.uMorph.value = reduced ? 1 : 0
     u.uOpacity.value = 0
     const tweens = [
-      gsap.to(u.uOpacity, { value: cfg.opacity, duration: 0.7, delay: 0.5, ease: 'power1.out' }),
-      gsap.to(u.uMorph, { value: 1, duration: reduced ? 0 : 2.4, delay: 0.4, ease: 'power2.inOut' }),
+      gsap.to(u.uOpacity, { value: cfg.opacity, duration: 0.45, delay: 0.15, ease: 'power1.out' }),
+      gsap.to(u.uMorph, { value: 1, duration: reduced ? 0 : 2.0, delay: 0.2, ease: 'power3.out' }),
     ]
     return () => tweens.forEach((t) => t.kill())
   }, [data, cfg.opacity])

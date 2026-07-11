@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { starVertexShader, starFragmentShader } from '../shaders/starPoints'
 import { useTierDrawRange } from '../config/tierBus'
+import { useThemeTint } from '../config/themeBus'
 
 /**
  * Gera as posições e atributos de uma camada de partículas.
@@ -53,13 +54,16 @@ function buildLayer(cfg) {
 /**
  * Camada reutilizável de partículas em WebGL puro (THREE.Points + ShaderMaterial).
  */
-function ParticleLayer({ cfg }) {
+function ParticleLayer({ cfg, themed = false }) {
   const materialRef = useRef()
   const pointsRef = useRef()
 
   // densidade por degrau (drawRange) — as posições já nascem aleatórias,
   // então qualquer prefixo do buffer é uma subamostra uniforme
   useTierDrawRange(pointsRef)
+
+  // camada de aura: mergulha na cor do mundo ativo (uTint via GSAP)
+  useThemeTint(materialRef, 2.6, themed)
 
   const { positions, scales, randoms, colorArr } = useMemo(
     () => buildLayer(cfg),
@@ -75,6 +79,7 @@ function ParticleLayer({ cfg }) {
       uTwinkleSpeed: { value: cfg.twinkleSpeed },
       uDriftAmplitude: { value: cfg.driftAmplitude },
       uDriftSpeed: { value: cfg.driftSpeed },
+      uTint: { value: new THREE.Vector3(1, 1, 1) }, // cosmos de fundo é neutro
     }),
     [cfg]
   )
@@ -127,14 +132,25 @@ function ParticleLayer({ cfg }) {
 }
 
 /**
- * StarField — compõe a poeira cósmica (fria) e as partículas douradas (quentes).
- * Recebe as configs de cada camada; nada aqui está acoplado ao organograma.
+ * StarField — compõe a poeira cósmica (fria), as partículas douradas (quentes)
+ * e a AURA temática (colorida pelo mundo ativo). O grupo inteiro gira muito
+ * devagar: o céu nunca fica estático, mesmo sem ninguém mexer o mouse.
  */
-export default function StarField({ dust, gold }) {
+export default function StarField({ dust, gold, aura }) {
+  const groupRef = useRef()
+
+  useFrame((_, delta) => {
+    const g = groupRef.current
+    if (!g) return
+    g.rotation.y += delta * 0.0065
+    g.rotation.z += delta * 0.0018
+  })
+
   return (
-    <group>
+    <group ref={groupRef}>
       <ParticleLayer cfg={dust} />
       <ParticleLayer cfg={gold} />
+      {aura && <ParticleLayer cfg={aura} themed />}
     </group>
   )
 }

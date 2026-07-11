@@ -58,6 +58,13 @@ function Avatar({ node, size = 44 }) {
 
 const TOUR_INTERVAL = 8000 // ms por área no modo apresentação
 
+// texto editorial de cada mundo (♠ ♦ ♣)
+const LEDE = {
+  Poker: ['Somos uma constelação de mentes,', 'conectadas por propósito', 'e unidas por uma visão.'],
+  SX: ['O diamante da Suprema:', 'precisão, velocidade', 'e um novo jogo começando.'],
+  Bet: ['O trevo da casa:', 'esporte, emoção', 'e a sorte do nosso lado.'],
+}
+
 /**
  * UI — camada editorial sobre o WebGL:
  * título serifado, legenda, stats, busca com fly-to, minimapa ♠,
@@ -72,10 +79,17 @@ export default function UI() {
   const [query, setQuery] = useState('')
   const [areaKey, setAreaKey] = useState(null) // painel lateral de área
   const [tour, setTour] = useState(false)      // modo apresentação
+  const [menuOpen, setMenuOpen] = useState(false) // painel de ajuda/atalhos
+  const searchRef = useRef(null)
   const [perfMode, setPerfMode] = useState(getMode) // auto | lite | high
   const [perfTier, setPerfTier] = useState(null)    // degrau atual (0..3)
   const [vertical, setVertical] = useState(0)       // índice em SHAPES (♠ ♦ ♣ S)
   const [cam, setCam] = useState(null)              // câmera p/ o minimapa
+
+  // a UI inteira muda de pele com a vertical (CSS lê data-vertical no :root)
+  useEffect(() => {
+    document.documentElement.dataset.vertical = SHAPES[vertical].key
+  }, [vertical])
 
   // posição/zoom da câmera → indicador no minimapa; só re-renderiza quando
   // o movimento é perceptível (economia real em PC fraco)
@@ -220,7 +234,30 @@ export default function UI() {
     const onFocus = (e) => setFocused(e.detail?.node ?? null)
     const onArea = (e) => setAreaKey(e.detail?.dept ?? null)
     const onKey = (e) => {
+      // atalhos globais (fora de campos de texto)
+      const typing = e.target?.tagName === 'INPUT' || e.target?.tagName === 'TEXTAREA'
+      if (!typing) {
+        if (e.key === '1' || e.key === '2' || e.key === '3') {
+          switchVertical(Number(e.key) - 1)
+          return
+        }
+        if (e.key === 't' || e.key === 'T') {
+          setTour((t) => !t)
+          return
+        }
+        if (e.key === 'f' || e.key === 'F') {
+          if (document.fullscreenElement) document.exitFullscreen()
+          else document.documentElement.requestFullscreen()
+          return
+        }
+        if (e.key === '/') {
+          e.preventDefault()
+          searchRef.current?.focus()
+          return
+        }
+      }
       if (e.key !== 'Escape') return
+      setMenuOpen(false)
       // ESC em camadas: para o tour, depois solta a pessoa, depois fecha o painel
       if (tourRef.current) {
         setTour(false)
@@ -318,13 +355,15 @@ export default function UI() {
 
         {/* busca — digite um nome e a câmera voa até a pessoa */}
         <div className="ui-search ui-fade">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
+          <span className="ui-search-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+          </span>
           <input
             type="text"
-            placeholder="Buscar pessoa ou área…"
+            placeholder="Explore — busque uma pessoa ou área"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -438,13 +477,18 @@ export default function UI() {
           A <br />
           <em>Constelação</em>
         </h1>
-        <p className="ui-lede">
-          Somos uma constelação de mentes,
-          <br />
-          conectadas por propósito
-          <br />e unidas por uma visão.
+        <p className="ui-lede" key={vertical}>
+          {(LEDE[SHAPES[vertical].key] ?? LEDE.Poker).map((line, i) => (
+            <span key={i} className="ui-lede-line" style={{ animationDelay: `${0.5 + i * 0.18}s` }}>
+              {line}
+              <br />
+            </span>
+          ))}
         </p>
-        <p className="ui-cta">Passe o cursor sobre uma estrela — ou busque um nome.</p>
+        <p className="ui-cta">
+          <i className="ui-cta-star" aria-hidden="true">✦</i> Passe o cursor sobre uma
+          estrela — ou busque um nome.
+        </p>
         <div className="ui-scroll">
           <span className="ui-scroll-icon" />
           <span>EXPLORE COM O CURSOR</span>
@@ -509,11 +553,11 @@ export default function UI() {
 
       <footer className="ui-bottom">
         <div className="ui-stats ui-fade">
-          <span><strong>{totalVertical}</strong> pessoas</span>
+          <span>pessoas <strong>{totalVertical}</strong></span>
           <span className="ui-sep" />
-          <span><strong>{visibleDepts.length}</strong> áreas</span>
+          <span>áreas <strong>{visibleDepts.length}</strong></span>
           <span className="ui-sep" />
-          <span><strong>3</strong> verticais</span>
+          <span>verticais <strong>3</strong></span>
         </div>
 
         <nav className="ui-nav ui-fade">

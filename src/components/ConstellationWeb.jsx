@@ -5,6 +5,7 @@ import gsap from 'gsap'
 import { lineVertexShader, lineFragmentShader } from '../shaders/connectionLines'
 import { SPADE_SHAPE, toWorld } from '../data/spadeShape'
 import { SHAPES } from '../data/shapes'
+import { THEMES } from '../config/constants'
 import { useTierDrawRange } from '../config/tierBus'
 import { useActiveVertical } from './Connections'
 
@@ -69,7 +70,8 @@ export default function ConstellationWeb({ cfg }) {
     const seeds = new Float32Array(n)
     const strengths = new Float32Array(n)
     const colors = new Float32Array(n * 3)
-    const webColor = new THREE.Color(cfg.color)
+    // teia na cor do tema da vertical (rubi na SX, esmeralda no Bet)
+    const webColor = new THREE.Color(THEMES[vertical]?.webColor ?? cfg.color)
     for (let k = 0; k < n; k += 2) {
       const seed = Math.random()
       for (let e = 0; e < 2; e++) {

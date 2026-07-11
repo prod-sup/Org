@@ -17,6 +17,7 @@ export const starVertexShader = /* glsl */ `
   uniform float uShapeFrom;
   uniform float uShapeTo;
   uniform float uMorph;
+  uniform float uBurst; // força da dispersão no meio do voo (0 = desliga)
 
   attribute float aScale;    // multiplicador de tamanho por partícula
   attribute float aRandom;   // semente aleatória por partícula
@@ -43,7 +44,7 @@ export const starVertexShader = /* glsl */ `
       float k = smoothstep(0.0, 1.0, clamp(uMorph * 1.45 - aRandom * 0.45, 0.0, 1.0));
       vec3 target = shapePos(uShapeTo);
       pos = mix(pos, target, k);
-      float burst = sin(k * 3.14159265);
+      float burst = sin(k * 3.14159265) * max(uBurst, 0.001);
       pos.x += sin(aRandom * 39.0) * burst * (0.6 + aRandom * 1.8);
       pos.y += cos(aRandom * 57.0) * burst * (0.6 + aRandom * 1.8);
       pos.z += sin(aRandom * 73.0) * burst * (0.9 + aRandom * 2.2);
@@ -74,9 +75,10 @@ export const starVertexShader = /* glsl */ `
 `
 
 export const starFragmentShader = /* glsl */ `
-  precision highp float;
+  precision mediump float;
 
   uniform float uOpacity;
+  uniform vec3  uTint; // color grade da vertical ativa (1,1,1 = neutro)
 
   varying vec3  vColor;
   varying float vTwinkle;
@@ -95,7 +97,7 @@ export const starFragmentShader = /* glsl */ `
     if (alpha < 0.001) discard;
 
     // Um leve realce no núcleo dá brilho para o bloom captar
-    vec3 color = vColor * (0.7 + 0.6 * pow(core, 6.0));
+    vec3 color = vColor * uTint * (0.7 + 0.6 * pow(core, 6.0));
 
     gl_FragColor = vec4(color, alpha);
   }
