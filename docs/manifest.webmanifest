@@ -1,0 +1,15 @@
+{
+  "name": "A Constelação · Grupo Suprema",
+  "short_name": "Constelação",
+  "description": "O organograma vivo da Suprema Gaming — Poker ♠ · SX ♦ · Bet ♣",
+  "start_url": ".",
+  "scope": ".",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#02030a",
+  "theme_color": "#02030a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

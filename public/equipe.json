@@ -6,8 +6,8 @@
   "_contato": "Opcional por pessoa: \"email\" (e-mail corporativo) e \"teams\" (link de chat do Teams). Sem esses campos, o site gera automaticamente primeiro.ultimo@dominio_email e o link de chat do Teams a partir do e-mail.",
   "dominio_email": "gruposuprema.com",
 
-  "_fonte_remota": "Opcional: preencha 'fonte_remota' com a URL de um Google Apps Script (veja apps-script/Code.gs no repositório) para os dados virem de uma planilha Google em vez deste arquivo. Deixe \"\" para usar este arquivo.",
-  "fonte_remota": "",
+  "_fonte_remota": "Cole aqui a URL de uma planilha Google (abas Pessoas/Areas — veja GUIA-RH.md) OU a URL /exec de um Apps Script. A planilha precisa estar 'Qualquer pessoa com o link · Leitor'. Deixe \"\" para usar só este arquivo. Enquanto a planilha estiver privada/incompleta, o site usa este arquivo automaticamente.",
+  "fonte_remota": "https://docs.google.com/spreadsheets/d/1st8rY2y5_hTUrW_qBRmNgdbXFxvkCZGc9DpWQ0Y_hSo/edit",
 
   "departments": [
     { "key": "Executivo",   "color": "#ffe9b8", "anchor": [0.0, 0.68],   "radius": 0.15 },

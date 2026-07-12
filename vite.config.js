@@ -9,19 +9,23 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'docs',
+    // o three.js sozinho já passa de 500 KB (inevitável p/ um motor 3D);
+    // ele é cacheável e o splash cobre o carregamento — sobe o teto do aviso
+    chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
-        // three.js + pós-processamento num chunk próprio (cacheável e
-        // paralelo): o app carrega e pinta a UI antes do motor 3D chegar
+        // chunks separados por dependência: cada um é cacheado à parte, então
+        // mexer no app (ou só no gsap) não invalida o pesado three.js
         manualChunks: {
-          'vendor-three': [
-            'three',
+          'vendor-three': ['three'],
+          'vendor-r3f': [
             '@react-three/fiber',
             '@react-three/drei',
             '@react-three/postprocessing',
             'postprocessing',
           ],
-          'vendor-react': ['react', 'react-dom', 'gsap'],
+          'vendor-gsap': ['gsap'],
+          'vendor-react': ['react', 'react-dom'],
         },
       },
     },

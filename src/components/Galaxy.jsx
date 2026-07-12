@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { starVertexShader, starFragmentShader } from '../shaders/starPoints'
@@ -54,14 +54,35 @@ function buildGalaxy(cfg) {
   return { positions, scales, randoms, colorArr }
 }
 
+// glow radial do núcleo (canvas → textura) — dá o "coração de luz" da galáxia
+function coreTexture() {
+  const c = document.createElement('canvas')
+  c.width = c.height = 128
+  const ctx = c.getContext('2d')
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+  g.addColorStop(0, 'rgba(255,255,255,0.95)')
+  g.addColorStop(0.25, 'rgba(255,225,170,0.6)')
+  g.addColorStop(0.6, 'rgba(255,200,120,0.18)')
+  g.addColorStop(1, 'rgba(255,200,120,0)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, 128, 128)
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  return tex
+}
+
 export default function Galaxy({ cfg }) {
   const materialRef = useRef()
   const pointsRef = useRef()
   const groupRef = useRef()
+  const coreRef = useRef()
   const data = useMemo(() => buildGalaxy(cfg), [cfg])
+  const coreTex = useMemo(coreTexture, [])
 
   useTierDrawRange(pointsRef)
   useThemeTint(materialRef, 2.6)
+
+  useEffect(() => () => coreTex.dispose(), [coreTex])
 
   const uniforms = useMemo(
     () => ({
@@ -79,6 +100,11 @@ export default function Galaxy({ cfg }) {
 
   useFrame((state, delta) => {
     if (materialRef.current) materialRef.current.uniforms.uTime.value += delta
+    // o núcleo pulsa devagar — nunca estático
+    if (coreRef.current) {
+      const s = cfg.radius * 0.5 * (1 + Math.sin(state.clock.elapsedTime * 0.4) * 0.06)
+      coreRef.current.scale.set(s, s, 1)
+    }
     const g = groupRef.current
     if (!g) return
     // rotação eterna do disco + inclinação viva na direção do mouse
@@ -91,6 +117,18 @@ export default function Galaxy({ cfg }) {
 
   return (
     <group ref={groupRef} position={cfg.position} rotation={[cfg.tilt, 0, cfg.roll]}>
+      {/* coração de luz do núcleo — encara a câmera (billboard no plano do disco) */}
+      <mesh ref={coreRef} renderOrder={-8} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          map={coreTex}
+          transparent
+          opacity={0.7}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </mesh>
       <points ref={pointsRef} frustumCulled={false} renderOrder={-8}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" count={data.positions.length / 3} array={data.positions} itemSize={3} />

@@ -87,6 +87,14 @@ export default function Scene() {
       }}
       onCreated={({ gl }) => {
         gl.setClearColor(new THREE.Color(cfg.scene.background), 1)
+        // contexto perdido (troca de GPU, suspensão): evita o navegador
+        // matar a página; ao restaurar, o R3F remonta a cena sozinho
+        const canvas = gl.domElement
+        const onLost = (e) => {
+          e.preventDefault()
+          console.warn('[Constelação] contexto WebGL perdido — aguardando restauração')
+        }
+        canvas.addEventListener('webglcontextlost', onLost, false)
       }}
     >
       {/* Monitor de FPS: ajusta o degrau ao vivo (apenas no modo auto, aba visível) */}

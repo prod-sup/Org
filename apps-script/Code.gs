@@ -7,16 +7,23 @@
  * COMO USAR (uma vez só):
  * 1. Crie uma planilha Google com DUAS abas:
  *
- *    Aba "Pessoas" — colunas na linha 1 (exatamente estes nomes):
- *      dept | name | nick | role | level | lead | vacant | photo
+ *    Aba "Pessoas" — colunas na linha 1 (use os que quiser; só as 4
+ *    primeiras são obrigatórias):
+ *      dept | name | role | level | nick | lead | vertical | vacant |
+ *      photo | email | teams | since | bio | local
  *    - level: CEO, Diretor, Coordenador, Analista ou Assistente
  *    - lead: número da linha do gestor DENTRO do mesmo dept (0 = primeira
  *      pessoa daquele dept na planilha); vazio = reporta ao CEO mais próximo
+ *    - vertical: "Poker", "SX", "Bet" ou combinações "Poker,Bet" (vazio = todas)
  *    - vacant: TRUE para vaga em aberto; photo: ex. fotos/brian.jpg
+ *    - since/bio/local: opcionais, aparecem no card da pessoa
  *
  *    Aba "Areas" — colunas na linha 1:
  *      key | color | anchorX | anchorY | radius
  *    (copie os valores atuais do equipe.json para começar)
+ *
+ *    Aba "Config" (opcional) — pares chave/valor na coluna A/B:
+ *      dominio_email | gruposuprema.com
  *
  * 2. Na planilha: Extensões → Apps Script → cole este arquivo → Salvar.
  * 3. Implantar → Nova implantação → tipo "App da web":
@@ -66,10 +73,38 @@ function doGet() {
     if (p.lead !== undefined && p.lead !== '') person.lead = Number(p.lead)
     if (p.vacant === true || String(p.vacant).toUpperCase() === 'TRUE') person.vacant = true
     if (p.photo) person.photo = String(p.photo)
+    // vertical: coluna com "Poker", "SX", "Bet" ou combinações "Poker,Bet"
+    if (p.vertical) {
+      person.vertical = String(p.vertical)
+        .split(/[,;/]/)
+        .map((v) => v.trim())
+        .filter(Boolean)
+    }
+    // campos ricos opcionais (aparecem no card)
+    if (p.email) person.email = String(p.email)
+    if (p.teams) person.teams = String(p.teams)
+    if (p.since) person.since = String(p.since)
+    if (p.bio) person.bio = String(p.bio)
+    if (p.local) person.local = String(p.local)
     return person
   })
 
+  const meta = {}
+  try {
+    const cfg = ss.getSheetByName('Config')
+    if (cfg) {
+      cfg.getDataRange().getValues().forEach((row) => {
+        const k = String(row[0] || '').trim()
+        if (k) meta[k] = row[1]
+      })
+    }
+  } catch (e) {}
+
   return ContentService.createTextOutput(
-    JSON.stringify({ departments: areas, people: people })
+    JSON.stringify({
+      departments: areas,
+      people: people,
+      dominio_email: meta.dominio_email || undefined,
+    })
   ).setMimeType(ContentService.MimeType.JSON)
 }

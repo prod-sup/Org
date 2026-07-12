@@ -25,6 +25,7 @@ export default function Organization() {
   const hoveredRef = useRef(-1)
   const dimDeptRef = useRef(null)     // área em destaque ('constelacao:dim')
   const dimVerticalRef = useRef('Poker') // vertical ativa (Poker/SX/Bet; null = todas)
+  const chainRef = useRef(null)          // Set de ids da trilha hierárquica ativa
   const camera = useThree((s) => s.camera)
   const size = useThree((s) => s.size)
 
@@ -38,11 +39,16 @@ export default function Organization() {
     const onVertical = (e) => {
       dimVerticalRef.current = e.detail?.key ?? 'Poker'
     }
+    const onChain = (e) => {
+      chainRef.current = e.detail?.ids ? new Set(e.detail.ids) : null
+    }
     window.addEventListener('constelacao:dim', onDim)
     window.addEventListener('constelacao:vertical', onVertical)
+    window.addEventListener('constelacao:chain', onChain)
     return () => {
       window.removeEventListener('constelacao:dim', onDim)
       window.removeEventListener('constelacao:vertical', onVertical)
+      window.removeEventListener('constelacao:chain', onChain)
     }
   }, [])
 
@@ -154,21 +160,31 @@ export default function Organization() {
         dimVerticalRef.current &&
         node.verticals &&
         !node.verticals.includes(dimVerticalRef.current)
-      const dimTarget = foraDaVertical ? 0 : foraDaArea ? 0.1 : 1
+
+      // trilha hierárquica: quem está na linha de comando brilha; o resto
+      // recua para o fundo — a estrutura "acende" da pessoa até o CEO
+      const chain = chainRef.current
+      const inChain = chain ? chain.has(node.id) : true
+      let dimTarget = foraDaVertical ? 0 : foraDaArea ? 0.1 : 1
+      if (chain && !foraDaVertical) dimTarget = inChain ? 1 : 0.16
       inst.dim[i] += (dimTarget - inst.dim[i]) * dimEase
       const f = inst.dim[i]
 
-      tmpColor.copy(inst.coreColor[i]).multiplyScalar(f)
+      // realce extra (cor + tamanho) para os nós da trilha
+      const chainGlow = chain && inChain ? 1.45 : 1
+      const chainScale = chain && inChain ? 1.18 : 1
+
+      tmpColor.copy(inst.coreColor[i]).multiplyScalar(f * chainGlow)
       cores.setColorAt(i, tmpColor)
-      tmpColor.copy(inst.haloColor[i]).multiplyScalar(f)
+      tmpColor.copy(inst.haloColor[i]).multiplyScalar(f * chainGlow)
       halos.setColorAt(i, tmpColor)
 
       dummy.position.set(x, y + bob, z)
-      dummy.scale.setScalar(inst.coreScale[i] * breathe * scaleBoost * (0.75 + f * 0.25))
+      dummy.scale.setScalar(inst.coreScale[i] * breathe * scaleBoost * chainScale * (0.75 + f * 0.25))
       dummy.updateMatrix()
       cores.setMatrixAt(i, dummy.matrix)
 
-      dummy.scale.setScalar(inst.haloScale[i] * breathe * haloBoost * (0.6 + f * 0.4))
+      dummy.scale.setScalar(inst.haloScale[i] * breathe * haloBoost * chainScale * (0.6 + f * 0.4))
       dummy.updateMatrix()
       halos.setMatrixAt(i, dummy.matrix)
     }

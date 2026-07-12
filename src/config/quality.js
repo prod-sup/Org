@@ -56,7 +56,14 @@ export function initialTier(mode) {
     if (cores <= 2) score += 3
     else if (cores <= 4) score += 2
     if (navigator.deviceMemory && navigator.deviceMemory <= 4) score += 2
-    if (window.matchMedia('(pointer: coarse)').matches) score += 1
+
+    // celular/tablet: tela sensível ao toque quase sempre = GPU móvel.
+    // Começa já num degrau conservador — evita o 1º solavanco (o monitor
+    // sobe de volta se sobrar fôlego).
+    const coarse = window.matchMedia('(pointer: coarse)').matches
+    const smallScreen = Math.min(window.innerWidth, window.innerHeight) < 700
+    if (coarse) score += 2
+    if (coarse && smallScreen) score += 1
 
     const canvas = document.createElement('canvas')
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
@@ -73,6 +80,7 @@ export function initialTier(mode) {
 
     if (score >= 5) return 3
     if (score >= 3) return 2
+    if (score >= 1) return 1
     return 0 // forte: começa no topo; o monitor desce se precisar
   } catch {
     return 2
