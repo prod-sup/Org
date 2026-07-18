@@ -68,8 +68,21 @@ export const starVertexShader = /* glsl */ `
     // Partículas coladas na câmera se dissolvem em vez de estourar
     vNearFade = smoothstep(5.0, 16.0, -mvPosition.z);
 
-    // Cintilação
-    vTwinkle = 0.55 + 0.45 * sin(uTime * uTwinkleSpeed * (0.6 + aRandom) + phase * 3.0);
+    // Cintilação: uma senoide só faz todas as estrelas piscarem com o MESMO
+    // formato de onda — lê como pulso mecânico. Duas harmônicas em razão não
+    // inteira dão uma curva irregular, cada estrela com respiração própria.
+    float tw1 = sin(uTime * uTwinkleSpeed * (0.6 + aRandom) + phase * 3.0);
+    float tw2 = sin(uTime * uTwinkleSpeed * (1.73 + aRandom * 0.9) + phase * 5.0);
+    float base = 0.52 + 0.30 * tw1 + 0.18 * tw2;
+
+    // FLARE: de tempos em tempos uma estrela solta um pico curto e forte.
+    // O expoente alto deixa o pico raro e estreito (quase todo o ciclo fica
+    // em zero), então o céu ganha acontecimentos pontuais em vez de um
+    // shimmer uniforme — é o bloom que transforma isso em faísca.
+    float f = sin(uTime * (0.11 + aRandom * 0.07) + phase);
+    float flare = pow(max(f, 0.0), 26.0);
+
+    vTwinkle = base + flare * 1.15;
     vColor = aColor;
   }
 `

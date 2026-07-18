@@ -7,6 +7,8 @@ import { SPADE_SHAPE, toWorld } from '../data/spadeShape'
 import { SHAPES } from '../data/shapes'
 import { useTierDrawRange } from '../config/tierBus'
 import { useThemeTint } from '../config/themeBus'
+import { useSyncPixelRatio } from '../config/pixelRatio'
+import { useLayerLife } from '../config/sceneLife'
 
 /**
  * SpadeDust — as partículas que DESENHAM a constelação ativa:
@@ -132,6 +134,19 @@ function DustLayer({ cfg, kind }) {
 
   // color grade da vertical ativa acompanha o morph
   useThemeTint(materialRef, 2.4)
+
+  // sprite acompanha o DPR do degrau em vez de inchar quando a resolução cai
+  useSyncPixelRatio(materialRef)
+
+  // ato do naipe: contorno se desenha primeiro, o miolo preenche depois;
+  // no focus o preenchimento recua mais que o contorno (a forma permanece)
+  useLayerLife(
+    materialRef,
+    cfg.opacity,
+    kind === 'outline'
+      ? { introDelay: 1.9, introDuration: 2.4, spotlight: 0.75 }
+      : { introDelay: 2.5, introDuration: 2.6, spotlight: 0.5 }
+  )
 
   // troca de vertical → morph GSAP entre a forma atual e a nova
   useEffect(() => {

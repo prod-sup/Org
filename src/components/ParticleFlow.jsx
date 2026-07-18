@@ -8,6 +8,8 @@ import { SHAPES } from '../data/shapes'
 import { toWorld } from '../data/spadeShape'
 import { flowVertexShader, flowFragmentShader } from '../shaders/flowPoints'
 import { useTierDrawRange } from '../config/tierBus'
+import { useSyncPixelRatio } from '../config/pixelRatio'
+import { useLayerLife } from '../config/sceneLife'
 import { useActiveVertical, nodeInVertical } from './Connections'
 
 /**
@@ -27,6 +29,13 @@ export default function ParticleFlow({ cfg }) {
 
   // menos partículas de fluxo nos degraus baixos (links já são aleatórios)
   useTierDrawRange(pointsRef)
+
+  // sprite acompanha o DPR do degrau em vez de inchar quando a resolução cai
+  useSyncPixelRatio(materialRef)
+
+  // último ato da entrada: a informação só começa a circular depois que as
+  // conexões terminaram de se desenhar
+  useLayerLife(materialRef, cfg.opacity, { introDelay: 4.6, introDuration: 1.8, spotlight: 0.5 })
 
   const geometry = useMemo(() => {
     const { byId } = org

@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { themeOf } from '../config/themeBus'
+import { useLifeFactor } from '../config/sceneLife'
 
 /**
  * NebulaClouds — as nuvens de cor do fundo, versão BARATA que roda em
@@ -43,6 +44,10 @@ export default function NebulaClouds({ lite = false }) {
   const groupRef = useRef()
   const matRefs = useRef([])
 
+  // primeiro ato: as nuvens de cor são a primeira coisa a emergir do escuro;
+  // no focus recuam junto com o resto do fundo
+  const life = useLifeFactor({ introDelay: 0, introDuration: 2.6, spotlight: 0.5 })
+
   useEffect(() => () => texture.dispose(), [texture])
 
   // cores por slot: A/B saem da nébula do tema, C do accent — variedade real
@@ -74,16 +79,20 @@ export default function NebulaClouds({ lite = false }) {
     if (!g) return
     const px = state.pointer.x
     const py = state.pointer.y
+    // parallax de câmera: além do mouse, as nuvens respondem à DERIVA — cada
+    // uma com profundidade própria, o fundo desliza contra o naipe
+    const cam = state.camera.position
+    const vis = life.current.intro * life.current.spot
     g.children.forEach((mesh, i) => {
       const c = clouds[i]
       const depth = 1 + i * 0.25 // nuvens "mais longe" reagem menos
       mesh.rotation.z = t * 0.008 * c.drift * (i % 2 ? 1 : -1)
       mesh.position.x =
-        c.pos[0] + Math.sin(t * 0.03 * c.drift + i * 1.7) * 3.5 - (px * 4) / depth
+        c.pos[0] + Math.sin(t * 0.03 * c.drift + i * 1.7) * 3.5 - (px * 4 + cam.x * 0.9) / depth
       mesh.position.y =
-        c.pos[1] + Math.cos(t * 0.024 * c.drift + i * 2.3) * 2.5 - (py * 3) / depth
+        c.pos[1] + Math.cos(t * 0.024 * c.drift + i * 2.3) * 2.5 - (py * 3 + cam.y * 0.7) / depth
       const mat = matRefs.current[i]
-      if (mat) mat.opacity = c.op * (0.8 + 0.25 * Math.sin(t * 0.05 * c.drift + i))
+      if (mat) mat.opacity = c.op * (0.8 + 0.25 * Math.sin(t * 0.05 * c.drift + i)) * vis
     })
   })
 

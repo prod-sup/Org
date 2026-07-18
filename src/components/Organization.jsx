@@ -2,6 +2,7 @@ import { useMemo, useRef, useLayoutEffect, useCallback, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOrganization, LEVELS } from '../data/organization'
+import { useLifeFactor } from '../config/sceneLife'
 
 const dummy = new THREE.Object3D()
 const tmpColor = new THREE.Color()
@@ -28,6 +29,11 @@ export default function Organization() {
   const chainRef = useRef(null)          // Set de ids da trilha hierárquica ativa
   const camera = useThree((s) => s.camera)
   const size = useThree((s) => s.size)
+  const coreMatRef = useRef()
+  const haloMatRef = useRef()
+
+  // ato das pessoas: as estrelas acendem depois do naipe se formar
+  const life = useLifeFactor({ introDelay: 2.2, introDuration: 2.2 })
 
   // Trilha do time: hover na legenda / painel / vertical acende só quem pertence
   useEffect(() => {
@@ -40,7 +46,15 @@ export default function Organization() {
       dimVerticalRef.current = e.detail?.key ?? 'Poker'
     }
     const onChain = (e) => {
-      chainRef.current = e.detail?.ids ? new Set(e.detail.ids) : null
+      if (e.detail?.ids) {
+        // ids vêm ordenados pessoa → CEO: a trilha acende NESSA ordem, um
+        // nó por vez (start é marcado no primeiro frame que a vê)
+        const order = new Map()
+        e.detail.ids.forEach((id, i) => order.set(id, i))
+        chainRef.current = { order, start: -1 }
+      } else {
+        chainRef.current = null
+      }
     }
     window.addEventListener('constelacao:dim', onDim)
     window.addEventListener('constelacao:vertical', onVertical)
@@ -95,7 +109,8 @@ export default function Organization() {
     })
 
     const dim = new Float32Array(n).fill(1) // fator de isolamento suavizado
-    return { n, basePos, coreScale, haloScale, coreColor, haloColor, phase, freq, amp, bob, boost, dim }
+    const cf = new Float32Array(n).fill(-1) // último fator de cor ESCRITO (cache)
+    return { n, basePos, coreScale, haloScale, coreColor, haloColor, phase, freq, amp, bob, boost, dim, cf }
   }, [org])
 
   // Inicializa matrizes e cores das instâncias
@@ -138,6 +153,17 @@ export default function Organization() {
     const dimEase = Math.min(1, delta * 4) // isolamento entra/sai mais lento
     const dimDept = dimDeptRef.current
 
+    // entrada: as estrelas nascem juntas via opacidade dos materiais
+    const vis = life.current.intro
+    if (coreMatRef.current) coreMatRef.current.opacity = vis
+    if (haloMatRef.current) haloMatRef.current.opacity = 0.1 * vis
+
+    // trilha: marca o instante em que a cena a viu pela primeira vez
+    const chain = chainRef.current
+    if (chain && chain.start < 0) chain.start = t
+
+    let colorDirty = false // só sobe instanceColor se alguma cor mudou de fato
+
     for (let i = 0; i < inst.n; i++) {
       const x = inst.basePos[i * 3 + 0]
       const y = inst.basePos[i * 3 + 1]
@@ -161,23 +187,35 @@ export default function Organization() {
         node.verticals &&
         !node.verticals.includes(dimVerticalRef.current)
 
-      // trilha hierárquica: quem está na linha de comando brilha; o resto
-      // recua para o fundo — a estrutura "acende" da pessoa até o CEO
-      const chain = chainRef.current
-      const inChain = chain ? chain.has(node.id) : true
+      // trilha hierárquica SEQUENCIAL: a linha de comando acende da pessoa
+      // até o CEO, um nó por vez — a estrutura se CONTA, não só aparece.
+      // Quem não é da trilha recua para o fundo.
+      let lit = true
+      if (chain) {
+        const idx = chain.order.get(node.id)
+        lit = idx !== undefined && t - chain.start >= idx * 0.14
+      }
       let dimTarget = foraDaVertical ? 0 : foraDaArea ? 0.1 : 1
-      if (chain && !foraDaVertical) dimTarget = inChain ? 1 : 0.16
+      if (chain && !foraDaVertical) dimTarget = lit ? 1 : 0.16
       inst.dim[i] += (dimTarget - inst.dim[i]) * dimEase
       const f = inst.dim[i]
 
       // realce extra (cor + tamanho) para os nós da trilha
-      const chainGlow = chain && inChain ? 1.45 : 1
-      const chainScale = chain && inChain ? 1.18 : 1
+      const chainGlow = chain && lit ? 1.45 : 1
+      const chainScale = chain && lit ? 1.18 : 1
 
-      tmpColor.copy(inst.coreColor[i]).multiplyScalar(f * chainGlow)
-      cores.setColorAt(i, tmpColor)
-      tmpColor.copy(inst.haloColor[i]).multiplyScalar(f * chainGlow)
-      halos.setColorAt(i, tmpColor)
+      // cores: só reescreve quando o fator mudou de verdade — em repouso o
+      // loop vira só matrizes e o upload de instanceColor some (CPU fraca
+      // agradece: era metade do custo por frame deste componente)
+      const cfv = f * chainGlow
+      if (Math.abs(cfv - inst.cf[i]) > 0.0015) {
+        inst.cf[i] = cfv
+        tmpColor.copy(inst.coreColor[i]).multiplyScalar(cfv)
+        cores.setColorAt(i, tmpColor)
+        tmpColor.copy(inst.haloColor[i]).multiplyScalar(cfv)
+        halos.setColorAt(i, tmpColor)
+        colorDirty = true
+      }
 
       dummy.position.set(x, y + bob, z)
       dummy.scale.setScalar(inst.coreScale[i] * breathe * scaleBoost * chainScale * (0.75 + f * 0.25))
@@ -190,8 +228,8 @@ export default function Organization() {
     }
     cores.instanceMatrix.needsUpdate = true
     halos.instanceMatrix.needsUpdate = true
-    if (cores.instanceColor) cores.instanceColor.needsUpdate = true
-    if (halos.instanceColor) halos.instanceColor.needsUpdate = true
+    if (colorDirty && cores.instanceColor) cores.instanceColor.needsUpdate = true
+    if (colorDirty && halos.instanceColor) halos.instanceColor.needsUpdate = true
   })
 
   const emitHover = useCallback(
@@ -225,6 +263,7 @@ export default function Organization() {
       >
         <sphereGeometry args={[1, 16, 16]} />
         <meshBasicMaterial
+          ref={haloMatRef}
           transparent
           opacity={0.1}
           depthWrite={false}
@@ -262,7 +301,8 @@ export default function Organization() {
       >
         {/* detalhe 2 = 320 triângulos/nó (era 1280) — invisível com bloom, 4× mais leve */}
         <icosahedronGeometry args={[1, 2]} />
-        <meshBasicMaterial toneMapped={false} />
+        {/* transparent p/ o fade de entrada; opacity é dirigida no useFrame */}
+        <meshBasicMaterial ref={coreMatRef} transparent toneMapped={false} />
       </instancedMesh>
     </group>
   )

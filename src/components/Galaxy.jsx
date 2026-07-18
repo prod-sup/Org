@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import { starVertexShader, starFragmentShader } from '../shaders/starPoints'
 import { useTierDrawRange } from '../config/tierBus'
 import { useThemeTint } from '../config/themeBus'
+import { useSyncPixelRatio } from '../config/pixelRatio'
+import { useLayerLife } from '../config/sceneLife'
 
 /**
  * Galaxy — a galáxia espiral que vive atrás da constelação.
@@ -81,6 +83,15 @@ export default function Galaxy({ cfg }) {
 
   useTierDrawRange(pointsRef)
   useThemeTint(materialRef, 2.6)
+  // sprite acompanha o DPR do degrau em vez de inchar quando a resolução cai
+  useSyncPixelRatio(materialRef)
+
+  // nasce cedo (é o fundo do palco) e recua bastante no focus
+  const life = useLayerLife(materialRef, cfg.opacity, {
+    introDelay: 0.2,
+    introDuration: 3.4,
+    spotlight: 0.3,
+  })
 
   useEffect(() => () => coreTex.dispose(), [coreTex])
 
@@ -104,6 +115,8 @@ export default function Galaxy({ cfg }) {
     if (coreRef.current) {
       const s = cfg.radius * 0.5 * (1 + Math.sin(state.clock.elapsedTime * 0.4) * 0.06)
       coreRef.current.scale.set(s, s, 1)
+      // o núcleo (billboard próprio) acompanha a entrada e o spotlight
+      coreRef.current.material.opacity = 0.7 * life.current.intro * life.current.spot
     }
     const g = groupRef.current
     if (!g) return
@@ -113,6 +126,13 @@ export default function Galaxy({ cfg }) {
     const tz = cfg.roll + state.pointer.x * 0.05
     g.rotation.x += (tx - g.rotation.x) * 0.02
     g.rotation.z += (tz - g.rotation.z) * 0.02
+
+    // parallax contra a deriva da câmera: a galáxia é o objeto mais fundo da
+    // cena, então se desloca CONTRA o passeio — profundidade real, não cenário
+    // pintado. Fator pequeno: ela mal anda, mas o cérebro registra a camada.
+    const cam = state.camera.position
+    g.position.x = cfg.position[0] - cam.x * 0.14
+    g.position.y = cfg.position[1] - cam.y * 0.1
   })
 
   return (

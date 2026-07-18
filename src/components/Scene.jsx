@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { AdaptiveDpr, AdaptiveEvents, PerformanceMonitor, Preload } from '@react-three/drei'
 import * as THREE from 'three'
@@ -37,6 +37,7 @@ export default function Scene() {
   const [mode, setMode] = useState(getMode)
   const [tier, setTier] = useState(() => initialTier(getMode()))
   const [pageVisible, setPageVisible] = useState(() => !document.hidden)
+  const lastDecline = useRef(0) // quando o degrau desceu pela última vez
 
   // Aba oculta = rAF suspenso pelo navegador → o FPS despenca sem culpa da
   // máquina. O monitor é desmontado (e zera seus contadores) enquanto isso.
@@ -97,13 +98,26 @@ export default function Scene() {
         canvas.addEventListener('webglcontextlost', onLost, false)
       }}
     >
-      {/* Monitor de FPS: ajusta o degrau ao vivo (apenas no modo auto, aba visível) */}
+      {/* Monitor de FPS: ajusta o degrau ao vivo (apenas no modo auto, aba
+          visível). ASSIMÉTRICO de propósito: janela de medição curta (ms ×
+          iterations ≈ 1.1s) para DESCER rápido — máquina fraca não fica
+          segundos engasgando até o monitor se convencer. SUBIR é paciente:
+          só depois de 12s sem declínio, senão o degrau fica quicando
+          (sobe → engasga → desce → sobe...) e o quique é pior que ficar. */}
       {mode === 'auto' && pageVisible && (
         <PerformanceMonitor
+          ms={140}
+          iterations={8}
           bounds={() => [40, 55]}
-          flipflops={6}
-          onDecline={() => setTier((t) => Math.min(3, t + 1))}
-          onIncline={() => setTier((t) => Math.max(0, t - 1))}
+          flipflops={8}
+          onDecline={() => {
+            lastDecline.current = performance.now()
+            setTier((t) => Math.min(3, t + 1))
+          }}
+          onIncline={() => {
+            if (performance.now() - lastDecline.current > 12000)
+              setTier((t) => Math.max(0, t - 1))
+          }}
           onFallback={() => setTier(3)}
         />
       )}

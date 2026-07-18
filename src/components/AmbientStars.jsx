@@ -6,6 +6,8 @@ import { starVertexShader, starFragmentShader } from '../shaders/starPoints'
 import { SPADE_SHAPE, toWorld } from '../data/spadeShape'
 import { useActiveVertical } from './Connections'
 import { useThemeTint } from '../config/themeBus'
+import { useSyncPixelRatio } from '../config/pixelRatio'
+import { useLifeFactor } from '../config/sceneLife'
 
 /**
  * AmbientStars — as estrelas que EXPLODEM: a cada troca de constelação elas
@@ -86,6 +88,16 @@ export default function AmbientStars({ cfg }) {
   // as estrelas soltas mergulham na paleta da vertical
   useThemeTint(materialRef, 2.0)
 
+  // sprite acompanha o DPR do degrau em vez de inchar quando a resolução cai
+  useSyncPixelRatio(materialRef)
+
+  // spotlight do focus (a entrada é o próprio burst — sem intro dupla).
+  // O burst tweena um PROXY (fade) em vez do uniform: o frame compõe
+  // fade × spot num lugar só e os dois tweens nunca brigam pelo valor.
+  const life = useLifeFactor({ spotlight: 0.4 })
+  const fade = useRef({ v: 0 })
+  const first = useRef(true)
+
   // a cada troca: explode do miolo pra tela toda (burst do shader no meio)
   useEffect(() => {
     const u = materialRef.current?.uniforms
@@ -94,16 +106,23 @@ export default function AmbientStars({ cfg }) {
     u.uShapeFrom.value = 0
     u.uShapeTo.value = 1
     u.uMorph.value = reduced ? 1 : 0
-    u.uOpacity.value = 0
+    fade.current.v = 0
+    // na PRIMEIRA vez a explosão espera o ato dela (depois do ouro, antes do
+    // naipe); nas trocas de vertical dispara imediata como sempre foi
+    const delay = first.current && !reduced ? 2.1 : 0.15
+    first.current = false
     const tweens = [
-      gsap.to(u.uOpacity, { value: cfg.opacity, duration: 0.45, delay: 0.15, ease: 'power1.out' }),
-      gsap.to(u.uMorph, { value: 1, duration: reduced ? 0 : 2.0, delay: 0.2, ease: 'power3.out' }),
+      gsap.to(fade.current, { v: cfg.opacity, duration: 0.45, delay, ease: 'power1.out' }),
+      gsap.to(u.uMorph, { value: 1, duration: reduced ? 0 : 2.0, delay: delay + 0.05, ease: 'power3.out' }),
     ]
     return () => tweens.forEach((t) => t.kill())
   }, [data, cfg.opacity])
 
   useFrame((_, delta) => {
-    if (materialRef.current) materialRef.current.uniforms.uTime.value += delta
+    const u = materialRef.current?.uniforms
+    if (!u) return
+    u.uTime.value += delta
+    u.uOpacity.value = fade.current.v * life.current.spot
   })
 
   if (!data) return null

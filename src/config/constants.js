@@ -76,6 +76,17 @@ export const CONFIG = {
     // flutuação idle (respiração)
     floatAmplitude: 0.5,
     floatSpeed: 0.16,
+    // DERIVA CINEMATOGRÁFICA — a câmera nunca fica ancorada. Frequências
+    // incomensuráveis (razão áurea) fazem o passeio não repetir: o olho nunca
+    // reconhece o ciclo. É daqui que vem a sensação de estar DENTRO da cena —
+    // ao transladar, as camadas em Z (galáxia -14, naipe 0, poeira 60) se
+    // deslocam uma contra a outra e o espaço ganha volume de verdade.
+    driftX: 3.4,                 // curso horizontal (o que mais faltava)
+    driftY: 1.3,
+    driftZ: 2.2,                 // aproxima/afasta muito lentamente
+    driftSpeed: 0.031,           // ~3 min por volta — quase subliminar
+    lookDrift: 1.15,             // o ALVO também passeia: reenquadra, não só move
+    roll: 0.028,                 // inclinação sutil do horizonte (radianos)
   },
 
   // ---------------------------------------------------------------------------

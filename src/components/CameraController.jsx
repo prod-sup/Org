@@ -5,6 +5,11 @@ import gsap from 'gsap'
 
 const GROUP_OFFSET_X = 3.2 // deslocamento do naipe na cena (Scene.jsx)
 
+// Razão áurea e seu quadrado: multiplicadores irracionais para a deriva da
+// câmera. Frequências incomensuráveis = o passeio nunca se repete.
+const PHI = 1.618033988749
+const PHI2 = 2.618033988749
+
 /**
  * CameraController
  * - Reveal cinematográfico na entrada (GSAP): de longe até a posição de repouso.
@@ -46,7 +51,10 @@ export default function CameraController({ cfg }) {
       })
     }
     window.addEventListener('constelacao:vertical', onVertical)
-    return () => window.removeEventListener('constelacao:vertical', onVertical)
+    return () => {
+      window.removeEventListener('constelacao:vertical', onVertical)
+      gsap.killTweensOf(pull.current) // tween órfão não sobrevive ao unmount
+    }
   }, [])
 
   // Zoom da UI: aproxima/afasta a posição de repouso com a mesma inércia
@@ -143,15 +151,33 @@ export default function CameraController({ cfg }) {
       )
       lookTarget.current.copy(f)
     } else {
-      // Repouso: base + parallax + respiração + micro-aproximação do hover
+      // Deriva cinematográfica: sem isso a câmera fica ancorada e só o mouse a
+      // move — a cena inteira vibra no lugar e nada atravessa o espaço.
+      // As razões PHI/PHI² são irracionais de propósito: o passeio nunca fecha
+      // um ciclo, então o olho não decora o padrão e a cena parece sempre viva.
+      const d = reduced.current ? 0 : 1
+      const s = t * cfg.driftSpeed
+      const driftX = (Math.sin(s) + Math.sin(s * PHI + 1.3) * 0.4) * cfg.driftX * d
+      const driftY = (Math.cos(s * PHI) + Math.sin(s * PHI2 + 0.7) * 0.5) * cfg.driftY * d
+      const driftZ = Math.sin(s * PHI2 + 2.1) * cfg.driftZ * d
+
+      // Repouso: base + deriva + parallax + respiração + aproximação do hover
       target.current.set(
-        cfg.base[0] + pointer.x * strength,
-        cfg.base[1] + pointer.y * strength + Math.sin(t * cfg.floatSpeed) * floatAmp,
-        fitZ - zoom.current - hoverT.current.v * 1.6 +
+        cfg.base[0] + driftX + pointer.x * strength,
+        cfg.base[1] + driftY + pointer.y * strength + Math.sin(t * cfg.floatSpeed) * floatAmp,
+        fitZ + driftZ - zoom.current - hoverT.current.v * 1.6 +
           pull.current.v * 6 +
           Math.cos(t * cfg.floatSpeed * 0.7) * floatAmp * 0.5
       )
-      lookTarget.current.set(0, 0, 0)
+
+      // O ALVO também passeia (contra a fase da posição): a câmera REENQUADRA
+      // em vez de só transladar rígida. É a diferença entre um trilho e um
+      // operador de câmera respirando atrás da lente.
+      lookTarget.current.set(
+        -driftX * 0.28 + Math.sin(s * PHI2 * 1.3) * cfg.lookDrift * d,
+        Math.cos(s * 1.31 + 0.4) * cfg.lookDrift * 0.6 * d,
+        0
+      )
     }
 
     // Inércia: posição e olhar aproximam-se suavemente dos alvos
@@ -159,6 +185,13 @@ export default function CameraController({ cfg }) {
     lookCur.current.lerp(lookTarget.current, cfg.parallaxDamping * 1.4)
     camera.position.copy(current.current)
     camera.lookAt(lookCur.current)
+
+    // Roll: o horizonte inclina de leve, fora de fase com a deriva. Quebra a
+    // rigidez do eixo Y travado do lookAt — o enquadramento deixa de parecer
+    // um tripé e passa a parecer câmera na mão, bem devagar.
+    if (!reduced.current) {
+      camera.rotateZ(Math.sin(t * cfg.driftSpeed * PHI + 0.9) * cfg.roll)
+    }
 
     // minimapa: para onde a câmera olha (coordenadas do naipe) + distância
     if (t - lastEmit.current > 0.15) {

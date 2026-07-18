@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import { themeOf } from '../config/themeBus'
 import { nebulaVertexShader, nebulaFragmentShader } from '../shaders/nebula'
+import { useLayerLife } from '../config/sceneLife'
 
 /**
  * Atmosfera — skydome interno com nébula procedural (fbm noise).
@@ -12,6 +13,14 @@ import { nebulaVertexShader, nebulaFragmentShader } from '../shaders/nebula'
  */
 export default function Atmosphere({ cfg }) {
   const materialRef = useRef()
+
+  // a nébula emerge junto com as nuvens (primeiro ato) e recua no focus
+  useLayerLife(materialRef, cfg.intensity, {
+    uniform: 'uIntensity',
+    introDelay: 0,
+    introDuration: 3.2,
+    spotlight: 0.5,
+  })
 
   const uniforms = useMemo(
     () => ({

@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import { starVertexShader, starFragmentShader } from '../shaders/starPoints'
 import { useTierDrawRange } from '../config/tierBus'
 import { useThemeTint } from '../config/themeBus'
+import { useSyncPixelRatio } from '../config/pixelRatio'
+import { useLayerLife } from '../config/sceneLife'
 
 /**
  * Gera as posições e atributos de uma camada de partículas.
@@ -54,9 +56,12 @@ function buildLayer(cfg) {
 /**
  * Camada reutilizável de partículas em WebGL puro (THREE.Points + ShaderMaterial).
  */
-function ParticleLayer({ cfg, themed = false }) {
+function ParticleLayer({ cfg, themed = false, life = {} }) {
   const materialRef = useRef()
   const pointsRef = useRef()
+
+  // entrada em ondas + spotlight do focus (fundo recua quando alguém é focado)
+  useLayerLife(materialRef, cfg.opacity, life)
 
   // densidade por degrau (drawRange) — as posições já nascem aleatórias,
   // então qualquer prefixo do buffer é uma subamostra uniforme
@@ -64,6 +69,9 @@ function ParticleLayer({ cfg, themed = false }) {
 
   // camada de aura: mergulha na cor do mundo ativo (uTint via GSAP)
   useThemeTint(materialRef, 2.6, themed)
+
+  // sprite acompanha o DPR do degrau em vez de inchar quando a resolução cai
+  useSyncPixelRatio(materialRef)
 
   const { positions, scales, randoms, colorArr } = useMemo(
     () => buildLayer(cfg),
@@ -148,9 +156,13 @@ export default function StarField({ dust, gold, aura }) {
 
   return (
     <group ref={groupRef}>
-      <ParticleLayer cfg={dust} />
-      <ParticleLayer cfg={gold} />
-      {aura && <ParticleLayer cfg={aura} themed />}
+      {/* atos da entrada: a poeira fria acende primeiro, o ouro depois, a
+          aura por último — o cosmos se monta em camadas, não de uma vez */}
+      <ParticleLayer cfg={dust} life={{ introDelay: 0.5, introDuration: 2.8, spotlight: 0.4 }} />
+      <ParticleLayer cfg={gold} life={{ introDelay: 1.1, introDuration: 2.6, spotlight: 0.45 }} />
+      {aura && (
+        <ParticleLayer cfg={aura} themed life={{ introDelay: 1.6, introDuration: 2.6, spotlight: 0.5 }} />
+      )}
     </group>
   )
 }
