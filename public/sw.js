@@ -2,7 +2,7 @@
    e serve o app offline depois da 1ª visita. Cache "stale-while-revalidate":
    entrega rápido do cache e atualiza em segundo plano. Bump a versão para
    forçar atualização. */
-const CACHE = 'constelacao-v1'
+const CACHE = 'constelacao-v2' // v2: fix do pop de partículas na borda + cena viva
 const CORE = ['.', 'index.html', 'equipe.json', 'manifest.webmanifest', 'icon.svg', 'og.svg']
 
 self.addEventListener('install', (e) => {
